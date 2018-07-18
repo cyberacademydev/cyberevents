@@ -1,6 +1,5 @@
-### CyBeer
-CyBeer blockchain for cyber Academy
-<br>We're going to realize blockchain technology
+### CyBer Academy
+We're going to realize blockchain technology
 <br>on cyber Acdemy blockchain events!
 ### Contracts
 Token test contract address: `0x6361668495E77AF98C42B495A12F9A98B2d63580`
