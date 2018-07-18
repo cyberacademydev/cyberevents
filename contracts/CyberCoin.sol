@@ -219,7 +219,7 @@ contract CyberCoin is ERC721, Contactable {
     address _spender, 
     uint _tokenId
   ) 
-    internal 
+    public  
     view 
     returns (bool)
   {
@@ -394,7 +394,6 @@ contract CyberCoin is ERC721, Contactable {
 
   /**
    * @dev Method to clear approvals from any token
-   * @param _owner token owner (address)
    * @param _tokenId spenging token ID (uint)
    */
   function _clearApproval(
@@ -426,7 +425,6 @@ contract CyberCoin is ERC721, Contactable {
 
   /**
    * @dev Method to remove token from any address
-   * @param _from token owner (address)
    * @param _tokenId owned token ID (uint)
    */
   function removeToken(

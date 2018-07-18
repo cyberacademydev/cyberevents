@@ -82,7 +82,7 @@ contract CyberCore is Contactable {
 
   function getUpcomingEvents() public view returns (uint[] _events) {
     uint j = 0;
-    for(uint i = 0; i = allEvents.length; i--) {
+    for(uint i = allEvents.length; i < 0; i--) {
       if(events[i].startTime > now) {
         _events[j] = i;
         j++;
@@ -137,7 +137,7 @@ contract CyberCore is Contactable {
     require(msg.value >= events[_id].ticketPrice);
     require(msg.sender != owner);
 
-    require(cyber.mint(msg.sender, _uri, _id));
+    require(cyber.mint(msg.sender, _id, _uri));
     events[_id].ticketsAmount--;
   }
 
@@ -148,7 +148,7 @@ contract CyberCore is Contactable {
     public 
     onlyEventOwner(cyber.eventId(_tokenId)) 
   {
-    require(_participiant == cyber.isApprovedOrOwner(_participiant, _tokenId));
+    require(cyber.isApprovedOrOwner(_participiant, _tokenId));
     require(!cyber.tokenFreezed(_tokenId));
     require(events[cyber.eventId(_tokenId)].endTime > now);
 
