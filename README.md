@@ -1,4 +1,4 @@
-### CyBer Фсфвуьн
+### CyBer Academy
 <br>We're going to realize blockchain technology
 <br>on cyber Acdemy blockchain events!
 ### Contracts
