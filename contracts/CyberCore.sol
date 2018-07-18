@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./CybeerCoin.sol";
+import "./CyberCoin.sol";
 import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -9,11 +9,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  * @author Nick (facebook.com/k.kornilov01)
  * @author Alexandr (facebook.com/profile.php?id=100014804447876)
  */
-contract CybeerCore is Contactable {
+contract CyberCore is Contactable {
 
   using SafeMath for uint;
 
-  CybeerCoin public cyber;
+  CyberCoin public cyber;
 
   uint public lastEvent;
   bool public isActivated;
@@ -48,7 +48,7 @@ contract CybeerCore is Contactable {
   }
 
   constructor(
-    CybeerCoin _cyber
+    CyberCoin _cyber
   )
     public
   {
@@ -160,7 +160,7 @@ contract CybeerCore is Contactable {
     require(now > events[_id].endTime);
     events[_id].speaker.transfer(address(this).balance.div(2));
     owner.transfer(address(this).balance);
-    if(events[_id].ticketsAmount > 0) ticketsAmount = 0;
+    if(events[_id].ticketsAmount > 0) events[_id].ticketsAmount = 0;
   }
 
   function addOrganizer(address _organizer) external onlyOwner {

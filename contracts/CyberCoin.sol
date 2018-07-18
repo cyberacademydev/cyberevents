@@ -11,18 +11,18 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  * @author Nick (facebook.com/k.kornilov01)
  * @notice Project's GitHub: github.com/rjkz808/CyBeer
  */
-contract CybeerCoin is ERC721, Contactable {
+contract CyberCoin is ERC721, Contactable {
 
   using AddressUtils for address;
   using SafeMath for uint;
 
   /// @dev Token name
-  string internal constant name_ = "CybeerCoin";
+  string internal constant name_ = "CyberCoin";
   /// @dev Token symbol
-  string internal constant symbol_ = "CYBEER";
+  string internal constant symbol_ = "CYBER";
   /// @dev Token receive magic value
-  /// @dev equals to bytes4(keccak256("CybeerCoin received"))
-  bytes4 internal constant receive_ = 0x800c4821;
+  /// @dev equals to bytes4(keccak256("Cyber Academy"))
+  bytes4 internal constant receive_ = 0xf4945cc6;
   /// @dev Total tokens amount
   uint internal totalSupply_;
   /// @dev Array with all tokens IDs
