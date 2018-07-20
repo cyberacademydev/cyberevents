@@ -56,6 +56,7 @@ contract CyberCoin is ERC721, Contactable {
   event Burn(address indexed from, uint tokenId);
   event TokenFreeze(uint tokenId);
   event Freeze(address indexed who);
+  event Unfreeze(address indexed who);
   event Mint(address indexed to, uint tokenId);
 
   modifier onlyOwnerOf(uint _tokenId) {
@@ -242,16 +243,31 @@ contract CyberCoin is ERC721, Contactable {
     return tokenOwner[_tokenId] != address(0);
   }
 
+  /**
+   * @dev Gets token freeze status
+   * @param _tokenId validated token ID (uint)
+   * @return bool token freeze status
+   */
   function tokenFreezed(uint _tokenId) public view returns (bool) {
     require(exists(_tokenId));
     return freezedTokens[_tokenId];
   }
 
+  /**
+   * @dev Gets any account freeze status
+   * @param _who validated account (address)
+   * @return bool _who freeze status
+   */
   function isFreezed(address _who) public view returns (bool) {
     require(_who != address(0));
     return freezedList[_who];
   }
 
+  /**
+   * @dev Gets token event ID, needed for checkin
+   * @param _tokenId token ID (uint)
+   * @return uint event ID
+   */
   function eventId(uint _tokenId) public view returns (uint) {
     require(exists(_tokenId));
     return tokenEventId[_tokenId];
@@ -279,9 +295,16 @@ contract CyberCoin is ERC721, Contactable {
     uint _tokenId
   ) 
     public 
+    canTransfer(_tokenId)
   {
-    bytes memory empty;
-    safeTransferFrom(_from, _to, _tokenId);
+    require(_from != address(0));
+    require(_to != address(0));
+
+    _clearApproval(_tokenId);
+    removeToken(_tokenId);
+    addTokenTo(_to, _tokenId);
+
+    emit Transfer(_from, _to, _tokenId);
   }
 
   /**
@@ -387,13 +410,12 @@ contract CyberCoin is ERC721, Contactable {
    * @dev Method to clear approvals from any owned token
    * @param _tokenId spending token ID (uint)
    */
-  function clearApproval(uint _tokenId) public {
-    require(msg.sender == ownerOf(_tokenId));
+  function clearApproval(uint _tokenId) public onlyOwnerOf(_tokenId) {
     _clearApproval(_tokenId);
   }
 
   /**
-   * @dev Method to clear approvals from any token
+   * @dev Internal method to clear approvals from any token
    * @param _tokenId spenging token ID (uint)
    */
   function _clearApproval(
@@ -406,7 +428,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to add token to any address
+   * @dev Internal method to add token to any address
    * @param _to token recepient (address)
    * @param _tokenId sending token ID (uint)
    */
@@ -424,7 +446,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to remove token from any address
+   * @dev Internal method to remove token from any address
    * @param _tokenId owned token ID (uint)
    */
   function removeToken(
@@ -518,17 +540,23 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method
+   * @dev Method to freeze token
+   * @dev (available only for minter contract)
+   * @param _tokenId ID of token to be freezed (uint)
    */  
-  function freezeToken(uint _tokenId) public onlyMinter checkFreeze {
+  function freezeToken(uint _tokenId) public onlyMinter checkFreeze(_tokenId) {
     require(!tokenFreezed(_tokenId));
     freezedTokens[_tokenId] = true;
     emit TokenFreeze(_tokenId);
   }
 
   /**
-   * @dev Method to mint token (available only for minter contract address)
+   * @dev Method to mint token 
+   * @dev (available only for minter contract address)
    * @param _to token recepient (address)
+   * @param _id new token ID (uint)
+   * @param _uri new token URI (string)
+   * @return bool method validation status
    */
   function mint(
     address _to,
@@ -563,10 +591,26 @@ contract CyberCoin is ERC721, Contactable {
     minter = _minter;
   }
 
+  /**
+   * @dev Method to freeze any account
+   * @dev (available only for owner)
+   * @param _who account to be freezed (address)
+   */
   function freeze(address _who) external onlyOwner {
     require(!isFreezed(_who));
     freezedList[_who] = true;
     emit Freeze(_who);
+  }
+
+  /**
+   * @dev Method to unfreeze any account
+   * @dev (available only for owner)
+   * @param _who account to be unfreezed (address)
+   */
+  function unfreeze(address _who) external onlyOwner {
+    require(isFreezed(_who));
+    freezedList[_who] = false;
+    emit Unfreeze(_who);
   }
 
 }
