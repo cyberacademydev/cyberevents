@@ -6,6 +6,7 @@ import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/AddressUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /**
  * @title CybeerCoin ERC721 implementation
  * @author Nick (facebook.com/k.kornilov01)
@@ -59,11 +60,19 @@ contract CyberCoin is ERC721, Contactable {
   event Unfreeze(address indexed who);
   event Mint(address indexed to, uint tokenId);
 
+  /**
+   * @dev Throws if msg.sender isn't owner of that token
+   * @param _tokenId validated token ID (uint)
+   */
   modifier onlyOwnerOf(uint _tokenId) {
     require(msg.sender == ownerOf(_tokenId));
     _;
   }
 
+  /**
+   * @dev Throws if msg.sender cannot transfer that token
+   * @param _tokenId validated token ID
+   */
   modifier canTransfer(uint _tokenId) {
     require(isApprovedOrOwner(msg.sender, _tokenId));
     require(!tokenFreezed(_tokenId));
@@ -72,11 +81,18 @@ contract CyberCoin is ERC721, Contactable {
     _;
   }
 
+  /**
+   * @dev Throws if msg.sender's account freezed
+   */
   modifier checkFreeze() {
     require(!isFreezed(msg.sender));
     _;
   }
 
+  /**
+   * @dev Throws if that token freezed
+   * @param _tokenId validated token ID
+   */
   modifier checkToken(uint _tokenId) {
     require(!tokenFreezed(_tokenId));
     _;
@@ -274,7 +290,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view any token URI
+   * @dev Gets any token URI
    * @param _tokenId token ID (uint)
    * @return string _tokenId URI
    */
@@ -299,6 +315,7 @@ contract CyberCoin is ERC721, Contactable {
   {
     require(_from != address(0));
     require(_to != address(0));
+    require(!isFreezed(_to));
 
     _clearApproval(_tokenId);
     removeToken(_tokenId);
@@ -325,7 +342,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Safe method to transfer tokens
+   * @dev Safe method to transfer tokens with metadata
    * @param _from token sender (address)
    * @param _to token recepient (address)
    * @param _tokenId sending token ID (uint)
@@ -333,7 +350,7 @@ contract CyberCoin is ERC721, Contactable {
    */
   function safeTransferFrom(
     address _from, 
-    address _to, 
+    address _to,
     uint _tokenId, 
     bytes _data
   ) 
@@ -342,17 +359,19 @@ contract CyberCoin is ERC721, Contactable {
   {
     require(_from != address(0));
     require(_to != address(0));
+    require(!isFreezed(_to));
     
     _clearApproval(_tokenId);
     removeToken(_tokenId);
     addTokenTo(_to, _tokenId);
-    safeContract(_from, _to, _tokenId, _data);
+    require(safeContract(_from, _to, _tokenId, _data));
 
     emit Transfer(_from, _to, _tokenId);
   }
 
   /**
-   * @dev Method to call onERC721Received method if tokens recepient is contract
+   * @dev Internal method to call onERC721Received method 
+   * @dev if tokens recepient is contract
    * @param _from token sender (address)
    * @param _to token recepient (address)
    * @param _tokenId sending token ID (uint)
@@ -365,11 +384,13 @@ contract CyberCoin is ERC721, Contactable {
     bytes _data
   ) 
     internal 
+    returns (bool)
   {
     if(!_to.isContract()) {
       ERC721Receiver receiver = ERC721Receiver(_to);
       require(receive_ == receiver.onERC721Received(_from, _tokenId, _data));
     }
+    return true;
   }
 
   /**
@@ -384,9 +405,11 @@ contract CyberCoin is ERC721, Contactable {
     public 
     onlyOwnerOf(_tokenId)
     checkToken(_tokenId)
+    checkFreeze
   {
     require(_spender != ownerOf(_tokenId));
     require(_spender != address(0));
+    require(!isFreezed(_spender));
     tokenApproval[_tokenId] = _spender;
     emit Approval(msg.sender, _spender, _tokenId);
   }
@@ -401,21 +424,29 @@ contract CyberCoin is ERC721, Contactable {
     bool _approve
   ) 
     public 
+    checkFreeze
   {
     require(_spender != address(0));
+    require(!isFreezed(_spender));
     approvedForAll[msg.sender][_spender] = _approve;
   }
 
   /**
-   * @dev Method to clear approvals from any owned token
+   * @dev Method to clear approvals from owned token
    * @param _tokenId spending token ID (uint)
    */
-  function clearApproval(uint _tokenId) public onlyOwnerOf(_tokenId) {
+  function clearApproval(
+    uint _tokenId
+  ) 
+    public 
+    onlyOwnerOf(_tokenId) 
+    checkFreeze
+  {
     _clearApproval(_tokenId);
   }
 
   /**
-   * @dev Internal method to clear approvals from any token
+   * @dev Internal method to clear approvals from token
    * @param _tokenId spenging token ID (uint)
    */
   function _clearApproval(
@@ -493,7 +524,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to burn token from any approved msg.sender address
+   * @dev Method to burn from any approved for msg.sender token
    * @param _owner token owner (address)
    * @param _tokenId token ID (uint)
    */
@@ -518,7 +549,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal method to burn token from owner or approved msg.sender address
+   * @dev Internal method to burn tokens
    * @param _from token owner (address)
    * @param _tokenId token ID (uint)
    */
@@ -527,9 +558,11 @@ contract CyberCoin is ERC721, Contactable {
     uint _tokenId
   ) 
     internal 
+    canTransfer(_tokenId)
+    checkFreeze
   {
-    require(isApprovedOrOwner(msg.sender, _tokenId));
     require(_from != address(0));
+    require(!isFreezed(_from));
 
     totalSupply_ = totalSupply_.sub(1);
     removeToken(_tokenId);
@@ -544,7 +577,13 @@ contract CyberCoin is ERC721, Contactable {
    * @dev (available only for minter contract)
    * @param _tokenId ID of token to be freezed (uint)
    */  
-  function freezeToken(uint _tokenId) public onlyMinter checkFreeze(_tokenId) {
+  function freezeToken(
+    uint _tokenId
+  ) 
+    public 
+    onlyMinter 
+    checkToken(_tokenId) 
+  {
     require(!tokenFreezed(_tokenId));
     freezedTokens[_tokenId] = true;
     emit TokenFreeze(_tokenId);
@@ -571,22 +610,25 @@ contract CyberCoin is ERC721, Contactable {
 
     totalSupply_ = totalSupply_.add(1);
     uint tokenId = totalSupply_;
-    assert(!exists(tokenId));
+    require(!exists(tokenId));
     allTokensIndex[tokenId] = allTokens.length;
     allTokens.push(tokenId);
     tokenEventId[tokenId] = _id;
     tokenURIs[tokenId] = _uri;
     addTokenTo(_to, tokenId);
+    bytes memory empty;
+    require(safeContract(minter, _to, tokenId, empty));
 
     emit Mint(_to, tokenId);
     return true;
   }
 
   /**
-   * @dev Method to set new minter contract address (available only for owner)
+   * @dev Method to set new minter contract address 
+   * @dev (available only for owner)
    * @param _minter minter contract (address)
    */
-  function setMinter(address _minter) public onlyOwner {
+  function setMinter(address _minter) external onlyOwner {
     require(_minter != address(0));
     minter = _minter;
   }
