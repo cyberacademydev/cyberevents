@@ -1,7 +1,7 @@
 {
-  "name": "CyBeer",
+  "name": "CyBer",
   "version": "1.0.0",
-  "description": "CyBeer blockchain for cyber Academy\r <br>We're going to realize blockchain technology\r <br>on cyber Acdemy blockchain events!\r ### Contracts\r Token test contract address: `0x6361668495E77AF98C42B495A12F9A98B2d63580`\r <br>https://ropsten.etherscan.io/address/0x6361668495e77af98c42b495a12f9a98b2d63580",
+  "description": "CyBer blockchain for cyber Academy\r <br>We're going to realize blockchain technology\r <br>on Cyber Academy blockchain events!\r ### Contracts\r Token test contract address: `0x6361668495E77AF98C42B495A12F9A98B2d63580`\r <br>https://ropsten.etherscan.io/address/0x6361668495e77af98c42b495a12f9a98b2d63580",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
@@ -14,7 +14,7 @@
     "url": "git+https://github.com/rjkz808/CyBeer.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Nick (facebook.com/k.kornilov01)",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/rjkz808/CyBeer/issues"
@@ -22,6 +22,6 @@
   "homepage": "https://github.com/rjkz808/CyBeer#readme",
   "dependencies": {
     "openzeppelin-solidity": "1.10.0",
-    "solc": "^0.4.24"
+    "web3": "github:ethereum/web3.js"
   }
 }

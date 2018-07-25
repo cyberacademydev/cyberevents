@@ -17,11 +17,18 @@ contract CyberCoin is ERC721, Contactable {
   using AddressUtils for address;
   using SafeMath for uint;
 
+  /// @dev Token name
   string internal constant name_ = "CyberCoin";
+  /// @dev Token symbol
   string internal constant symbol_ = "CYBER";
+  /// @dev Token receive magic value
+  /// @dev equals to bytes4(keccak256("Cyber Academy"))
   bytes4 internal constant receive_ = 0xf4945cc6;
+  /// @dev Total tokens amount
   uint internal totalSupply_;
+  /// @dev Array with all tokens IDs
   uint[] internal allTokens;
+  /// @dev Minter contract
   address public minter;
 
   mapping(address => uint) internal balances;
@@ -35,6 +42,17 @@ contract CyberCoin is ERC721, Contactable {
   mapping(uint => bool) internal freezedTokens;
   mapping(uint => uint) internal tokenEventId;
   mapping(uint => string) internal tokenURIs;
+
+  struct Token {
+    address owner;
+    address approval;
+    uint id;
+    uint eventId;
+    uint ownedTokensIndex;
+    uint allTokensIndex;
+    string uri;
+    bool freeze;
+  }
 
   event Burn(address indexed from, uint tokenId);
   event TokenFreeze(uint tokenId);
