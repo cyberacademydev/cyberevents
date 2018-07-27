@@ -113,7 +113,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view total tokens amount
+   * @dev Gets total tokens amount
    * @return uint total tokens supply
    */
   function totalSupply() public view returns (uint) {
@@ -121,7 +121,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view any address tokens balance
+   * @dev Gets any account tokens balance
    * @param _owner tokens owner (address)
    * @return uint _owner tokens balance
    */
@@ -131,7 +131,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view any token owner address
+   * @dev Gets token owner by its ID
    * @param _tokenId token ID (uint)
    * @return address _tokenId owner
    */
@@ -141,7 +141,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view token ID by it's allTokens array index
+   * @dev Gets token ID by its allTokens array index
    * @param _index token's allTokens array index (uint)
    * @return uint token ID
    */
@@ -151,7 +151,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view all owned of any address tokens
+   * @dev Gets any account owned tokens
    * @param _owner tokens owner (address)
    * @return uint[] array of _owner owned tokens
    */
@@ -161,7 +161,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view token ID by it's owner address and ownedTokens array index
+   * @dev Gets token ID by its owner address and ownedTokens array index
    * @param _owner token owner (address)
    * @param _index token allTokens array index (uint)
    * @return uint token ID
@@ -180,7 +180,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view any token ID approved address
+   * @dev Gets token approved address
    * @param _tokenId token ID (uint)
    * @return address _tokenId approved address
    */
@@ -190,7 +190,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to view approved for all tokens from any owner to any spender address
+   * @dev Gets status ofall tokens approved address of any tokens owner
    * @param _owner tokens owner (address)
    * @param _spender tokens spender(address)
    * @return bool approved for all tokens status
@@ -233,7 +233,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to check the existence of any token ID
+   * @dev Method to check existence of token
    * @param _tokenId validated token ID (uint)
    * @return bool token existence status
    */
@@ -252,7 +252,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets any account freeze status
+   * @dev Gets account freeze status
    * @param _who validated account (address)
    * @return bool _who freeze status
    */
@@ -376,7 +376,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to approve tokens to spend
+   * @dev Method to approve tokens
    * @param _spender token spender (address)
    * @param _tokenId spending token ID (uint)
    */
@@ -397,7 +397,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to set approval for all msg.sender tokens
+   * @dev Method to set approval for all owned tokens
    * @param _spender tokens spender (address)
    * @param _approve tokens approval status (bool)
    */
@@ -441,7 +441,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal method to add token to any address
+   * @dev Internal method to add token to account
    * @param _to token recepient (address)
    * @param _tokenId sending token ID (uint)
    */
@@ -459,7 +459,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal method to remove token from any address
+   * @dev Internal method to remove token from account
    * @param _tokenId owned token ID (uint)
    */
   function removeToken(
@@ -506,7 +506,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to burn from any approved for msg.sender token
+   * @dev Method to burn token from any account approved msg.sender
    * @param _owner token owner (address)
    * @param _tokenId token ID (uint)
    */
@@ -520,7 +520,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to burn tokens from any approved msg.sender address
+   * @dev Method to burn tokens
    * @param _tokenIds array with token IDs (uint[])
    */
   function burnTokens(uint[] _tokenIds) public {
@@ -531,7 +531,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal method to burn tokens
+   * @dev Internal method to burn token
    * @param _from token owner (address)
    * @param _tokenId token ID (uint)
    */
