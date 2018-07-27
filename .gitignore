@@ -67,6 +67,3 @@ typings/
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
-
-# ТЗ
-*.docx
