@@ -6,14 +6,12 @@ import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/AddressUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-
 /**
  * @title CybeerCoin ERC721 implementation
  * @author Nick (facebook.com/k.kornilov01)
  * @notice Project's GitHub: github.com/rjkz808/CyBeer
  */
 contract CyberCoin is ERC721, Contactable {
-
   using AddressUtils for address;
   using SafeMath for uint;
 
