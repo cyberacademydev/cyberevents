@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/rjkz808/CyBeer#readme",
   "dependencies": {
-    "openzeppelin-solidity": "1.10.0",
+    "openzeppelin-solidity": "^1.10.0",
     "web3": "github:ethereum/web3.js"
   }
 }
