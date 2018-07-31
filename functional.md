@@ -6,14 +6,17 @@
         1. ID
         2. Start time
         3. End time
-        4. Ticket price
-        5. Tickets amount
-        6. Collected ETH amount
-        7. Event owner percent
-        8. Speakers percent
-        9. Event owner address
-        10. Array with participiants addresses
-        11. Array with speakers addresses
+        4. Date
+        5. Ticket price
+        6. Amount of tickets remaining
+        7. Collected ETH amount
+        8. Event owner percent
+        9. Speakers percent
+        10. Event owner address
+        11. Participiants amount
+        12. Speakers amount
+        13. Array with participiants addresses
+        14. Array with speakers addresses
     2. Get upcoming events
     3. Create event (only organizer can, 1.9) with following parameters:
         1. Start time
