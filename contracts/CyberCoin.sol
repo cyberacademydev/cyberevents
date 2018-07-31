@@ -38,8 +38,7 @@ contract CyberCoin is ERC721, Contactable {
 
   event Burn(address indexed from, uint tokenId);
   event TokenFreeze(uint tokenId);
-  event Freeze(address indexed who);
-  event Unfreeze(address indexed who);
+  event Freeze(address indexed who, bool freeze);
   event Mint(address indexed to, uint tokenId);
 
   /**
@@ -616,25 +615,15 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to freeze any account
+   * @dev Method to freeze or unfreeze any account
    * @dev (available only for owner)
    * @param _who account to be freezed (address)
+   * @param _freeze freeze status (true for freeze, false for unfreeze)
    */
-  function freeze(address _who) external onlyOwner {
+  function freeze(address _who, bool _freeze) external onlyOwner {
     require(!isFreezed(_who));
-    freezedList[_who] = true;
-    emit Freeze(_who);
-  }
-
-  /**
-   * @dev Method to unfreeze any account
-   * @dev (available only for owner)
-   * @param _who account to be unfreezed (address)
-   */
-  function unfreeze(address _who) external onlyOwner {
-    require(isFreezed(_who));
-    freezedList[_who] = false;
-    emit Unfreeze(_who);
+    freezedList[_who] = _freeze;
+    emit Freeze(_who, _freeze);
   }
 
 }
