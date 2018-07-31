@@ -17,9 +17,10 @@ contract CyberCoin is ERC721, Contactable {
   using AddressUtils for address;
   using SafeMath for uint;
 
-  string internal constant name_ = "CyberCoin";
-  string internal constant symbol_ = "CYBER";
-  bytes4 internal constant receive_ = 0xf4945cc6;
+  string public constant name_ = "CyberCoin";
+  string public constant symbol_ = "CYBER";
+  bytes4 public constant ERC721_RECEIVED = 0xf4945cc6;
+
   uint internal totalSupply_;
   uint[] internal allTokens;
   address public minter;
@@ -101,14 +102,6 @@ contract CyberCoin is ERC721, Contactable {
    */
   function symbol() public view returns (string) {
     return symbol_;
-  }
-
-  /**
-   * @dev Gets token receive magic value
-   * @return bytes4 receive_
-   */
-  function receive() public view returns (bytes4) {
-    return receive_;
   }
 
   /**
@@ -369,7 +362,7 @@ contract CyberCoin is ERC721, Contactable {
   {
     if(!_to.isContract()) {
       ERC721Receiver receiver = ERC721Receiver(_to);
-      require(receive_ == receiver.onERC721Received(_from, _tokenId, _data));
+      require(ERC721_RECEIVED == receiver.onERC721Received(_from, _tokenId, _data));
     }
     return true;
   }
