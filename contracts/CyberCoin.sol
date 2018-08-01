@@ -17,7 +17,7 @@ contract CyberCoin is ERC721, Contactable {
 
   string public constant name_ = "CyberCoin";
   string public constant symbol_ = "CYBER";
-  bytes4 public constant ERC721_RECEIVED = 0xf4945cc6;
+  bytes4 public constant ERC721_RECEIVED = 0x40253ed2;
 
   uint internal totalSupply_;
   uint[] internal allTokens;
@@ -596,7 +596,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Method to set new minter contract address 
+   * @dev Method to set new minter address 
    * @dev (available only for owner)
    * @param _minter minter contract (address)
    */
