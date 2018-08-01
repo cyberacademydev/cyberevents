@@ -2,4 +2,4 @@
 ### Cyber Academy DApp
 We're going to integrate blockchain technology
 <br>to cyber Academy blockchain events!
-<br>We're always open for community!
+<br>We're always open for our community!
