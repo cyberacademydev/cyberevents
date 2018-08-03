@@ -1,7 +1,4 @@
 
-# Calls expamples
-contracts/calls/
-
 # Logs
 logs
 *.log
@@ -67,3 +64,6 @@ typings/
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+
+# Desktop .ini config
+desktop.ini
