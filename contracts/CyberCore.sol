@@ -5,9 +5,9 @@ import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
- * @title Cyber Academy events core contract
- * @author Nick (facebook.com/k.kornilov01)
- * @author Alexandr (facebook.com/profile.php?id=100014804447876)
+ * @title Cyber Academy DApp core
+ * @author Nick - [Facebook](facebook.com/k.kornilov01), [GitHub](github.com/rjkz808)
+ * @author Alexandr - [Facebook](facebook.com/profile.php?id=100014804447876)
  */
 contract CyberCore is Contactable {
   using SafeMath for uint;
@@ -38,8 +38,8 @@ contract CyberCore is Contactable {
   event EventCancelled(uint id);
 
   /**
-   * @dev Constructor sets current CyberCoin address to interact with
-   * @param _cyber CyberCoin contract (address)
+   * @dev Constructor that sets current CyberCoin address to interact with
+   * @param _cyber address CyberCoin contract
    */
   constructor(CyberCoin _cyber) public {
     require(address(_cyber) != address(0));
@@ -47,15 +47,23 @@ contract CyberCore is Contactable {
   }
 
   /**
-   * @dev Gets event data
-   * @dev This method if bathed up to two parts
-   * @dev because it's too much arguments to return
-   * @dev (Compile Error: Stack too deep)
-   * @param _id event ID (uint)
-   * @return _event event structure (Event)
+   * @dev Gets the event data
+   * @dev This method is bathed up to the two parts
+   * @dev because there's too much arguments to return
+   * @dev and the Solidity compiler return
+   * @dev `Compile Error: Stack too deep`
+   * @param _id uint ID of the event
+   * @return id uint the event ID
+   * @return startTime uint the event start time
+   * @return endTime uint the event end time
+   * @return ticketPrice uint the price for those the tickets will be sold
+   * @return ticketsAmount uint participants limit
+   * @return paidAmount uint the total paid for the event tickets ETH amount
    */
   function getEventFirst(uint _id)
-    public view returns (
+    public 
+    view 
+    returns (
       uint id,
       uint startTime,
       uint endTime,
@@ -74,8 +82,19 @@ contract CyberCore is Contactable {
     );
   }
 
+  /**
+   * @dev Gets the event data
+   * @param _id uint ID of the event
+   * @return ownerPercent uint percent of the paid ETH that will receive the owner
+   * @return speakersPercent uint percent of the paid ETH that will receive the speakers
+   * @return participants address[] participants list
+   * @return speakers address[] speakers list
+   * @return canceled bool state of the event (`true` if canceled)
+   */
   function getEventSecond(uint _id)
-    public view returns (
+    public 
+    view 
+    returns (
       uint ownerPercent,
       uint speakersPercent,
       address[] participants,
@@ -93,8 +112,8 @@ contract CyberCore is Contactable {
   }
 
   /**
-   * @dev Gets the list of upcoming events IDs
-   * @return _events upcoming events (uint[])
+   * @dev Gets the list of the upcoming events IDs
+   * @return _events uint[] the upcoming events
    */
   function getUpcomingEvents() public view returns (uint[] _events) {
     uint j = 0;
@@ -109,14 +128,23 @@ contract CyberCore is Contactable {
   }
 
   /**
-   * @dev Function to create new event
-   * @param _startTime event start time (uint)
-   * @param _endTime event end time (uint)
-   * @param _ticketPrice ticket wei price (uint)
-   * @param _ticketsAmount ticket amount for this event (uint)
-   * @param _ownerPercent owner percent (uint)
-   * @param _speakersPercent speakers percent (uint)
-   * @param _speakers speakers ethereum accounts (address[])
+   * @dev Function to check the existence of the event
+   * @param _id uint ID of the validated event
+   * @return bool the event existence
+   */
+  function exists(uint _id) public view returns (bool) {
+    return events[_id].startTime > 0 && _id > 0;
+  }
+
+  /**
+   * @dev Function to create a new event
+   * @param _startTime uint the event start time
+   * @param _endTime uint the event end time
+   * @param _ticketPrice uint the ticket ETH price
+   * @param _ticketsAmount uint the tickets amount for this event
+   * @param _ownerPercent uint the owner percent
+   * @param _speakersPercent uint the speakers percent
+   * @param _speakers address[] the speakers ethereum accounts list
    */
   function createEvent(
     uint _startTime,
@@ -130,6 +158,11 @@ contract CyberCore is Contactable {
     public 
     onlyOwner
   {
+    require(_startTime > now);
+    require(_endTime > _startTime);
+    require(_ticketsAmount > 0);
+    require(_speakers.length > 0);
+
     lastEvent++;
     address[] memory participants_;
     Event memory event_ = Event({
@@ -149,41 +182,47 @@ contract CyberCore is Contactable {
   }
 
   /**
-   * @dev Function to cancel event
-   * @param _id event ID to be canceled (uint)
+   * @dev Function to cancel an event
+   * @param _id uint an event ID to be canceled
    */
   function cancelEvent(uint _id) public onlyOwner {
-    require(events[_id].startTime > now);
+    require(exists(_id));
     events[_id].canceled = true;
     emit EventCancelled(_id);
   }
 
   /**
-   * @dev Sign up function 
+   * @dev Function to sign up a new participant
+   * @dev - participant pays ETH for a ticket
+   * @dev - the function calls the CyberCoin `mint` function
+   * @dev - partipant receives his ticket (token)
+   * @notice Participant can paid amount bigger, that the ticket price but 
+   * @notice when he will receive the cashback he will get the participant
+   * @notice percent only from the ticket price, so amount paid from above will
+   * @notice share the contract owner and speakers
    * @param _id event's ID participant
    */
-  function signUp(uint _id, string _uri) public payable {
+  function signUp(uint _id) public payable {
     require(now < events[_id].startTime);
     require(events[_id].ticketsAmount > 0);
     require(msg.value >= events[_id].ticketPrice);
     require(msg.sender != owner);
     require(!events[_id].canceled);
-    require(cyber.mint(msg.sender, _id, _uri));
+    require(cyber.mint(msg.sender, _id));
     events[_id].ticketsAmount--;
   }
 
   /**
-   * @dev Function to check on event
-   * @param _participant participant's acoount (address)
-   * @param _tokenId showed token ID (uint)
-   * @notice How it works:
-   * @notice app generates QR that contents:
-   * @notice - participants current Status ETH address
-   * @notice - token ID, that he chose
-   * @notice function checks, that _participant
-   * @notice is the _tokenId owner
-   * @notice then the _tokenId token will be frozen
-   * @notice and _participant will receive his cashback
+   * @dev Function to check the participant on the event
+   * @param _participant address the participant's account
+   * @param _tokenId uint the showed token ID
+   * @notice How it works?
+   * @notice App generates QR that contents:
+   * @notice - participant's current Status ETH address
+   * @notice - ID of the token that he chose
+   * @notice function checks, that the `_participant` is the `_tokenId` owner
+   * @notice then the token will be frozen and _participant will receive his 
+   * @notice cashback (if it's doesn't equals to 0)
    */
   function checkIn(address _participant, uint _tokenId) 
     public 
@@ -198,7 +237,7 @@ contract CyberCore is Contactable {
     cyber.freezeToken(_tokenId);
 
     uint cashback = (
-      paidAmountOf[id][_participant].div(100).
+      events[id].ticketPrice.div(100).
       mul(100 - events[id].speakersPercent - events[id].ownerPercent)
     );
 
@@ -208,7 +247,7 @@ contract CyberCore is Contactable {
 
   /**
    * @dev Function to close the past event
-   * @param _id event ID (uint)
+   * @param _id uint ID of the event to be closed
    */
   function closeEvent(uint _id) public onlyOwner {
     require(now > events[_id].endTime);
@@ -224,12 +263,17 @@ contract CyberCore is Contactable {
     } else {
 
       owner.transfer(
-        events[_id].paidAmount.div(100).mul(events[_id].ownerPercent)
+        events[_id].paidAmount.
+        div(100).
+        mul(events[_id].ownerPercent)
       );
 
       for (uint j = 0; j < events[_id].speakers.length; j++) {
         events[_id].speakers[j].transfer(
-          events[_id].paidAmount.div(100).mul(events[_id].speakersPercent)
+          events[_id].paidAmount.
+          div(100).
+          mul(events[_id].speakersPercent).
+          div(events[_id].speakers.length)
         );
       }
 

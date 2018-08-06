@@ -22,7 +22,8 @@
   "homepage": "https://github.com/rjkz808/CyBeer#readme",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
-    "openzeppelin-solidity": "^1.10.0",
+    "babel-register": "^6.26.0",
+    "openzeppelin-solidity": "1.11.0",
     "web3": "github:ethereum/web3.js"
   }
 }

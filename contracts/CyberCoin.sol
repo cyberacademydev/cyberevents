@@ -2,22 +2,30 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol";
+import "openzeppelin-solidity/contracts/introspection/ERC165.sol";
 import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/AddressUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
- * @title CybeerCoin ERC721 implementation
- * @author Nick (facebook.com/k.kornilov01)
+ * @title Cyber Academy DApp ERC721 modified token
+ * @author Nick - [Facebook](facebook.com/k.kornilov01), [GitHub](github.com/rjkz808)
  */
 contract CyberCoin is ERC721, Contactable {
   using AddressUtils for address;
   using SafeMath for uint;
 
-  string public constant name_ = "CyberCoin";
-  string public constant symbol_ = "CYBER";
-  bytes4 public constant ERC721_RECEIVED = 0x40253ed2;
+  string internal constant name_ = "CyberCoin";
+  string internal constant symbol_ = "CYBER";
 
+  bytes4 internal constant ERC721_RECEIVED = 0x150b7a02;
+  bytes4 internal constant INTERFACEID_ERC165 = 0x01ffc9a7;
+  bytes4 internal constant INTERFACEID_ERC721 = 0x80ac58cd;
+  bytes4 internal constant INTERFACEID_ERC721_EXISTS = 0x4f558e79;
+  bytes4 internal constant INTERFACEID_ERC721_ENUMERABLE = 0x780e9d63;
+  bytes4 internal constant INTERFACEID_ERC721_METADATA = 0x5b5e139f;
+  bytes4 internal constant INTERFACEID_ERC721_TOKENSOF = 0x5a3f2672;
+  
   uint internal totalSupply_;
   uint[] internal allTokens;
   address public minter;
@@ -33,6 +41,7 @@ contract CyberCoin is ERC721, Contactable {
   mapping (uint => bool) internal freezedTokens;
   mapping (uint => uint) internal tokenEventId;
   mapping (uint => string) internal tokenURIs;
+  mapping (bytes4 => bool) internal supportedInterfaces;
 
   event Burn(address indexed from, uint tokenId);
   event TokenFreeze(uint tokenId);
@@ -40,8 +49,8 @@ contract CyberCoin is ERC721, Contactable {
   event Mint(address indexed to, uint tokenId);
 
   /**
-   * @dev Throws if msg.sender isn't owner of that token
-   * @param _tokenId validated token ID (uint)
+   * @dev Throws if the `msg.sender` doesn't own the specified token
+   * @param _tokenId uint the validated token ID
    */
   modifier onlyOwnerOf(uint _tokenId) {
     require(msg.sender == ownerOf(_tokenId));
@@ -49,8 +58,8 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Throws if msg.sender cannot transfer that token
-   * @param _tokenId validated token ID
+   * @dev Throws if the `msg.sender` cannot transfer the specified token
+   * @param _tokenId uint the validated token ID
    */
   modifier canTransfer(uint _tokenId) {
     require(isApprovedOrOwner(msg.sender, _tokenId));
@@ -61,7 +70,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Throws if msg.sender's account freezed
+   * @dev Throws if the `msg.sender` account frozen
    */
   modifier checkFreeze() {
     require(!isFreezed(msg.sender));
@@ -69,8 +78,8 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Throws if that token freezed
-   * @param _tokenId validated token ID
+   * @dev Throws if the specified token frozen
+   * @param _tokenId uint the validated token ID
    */
   modifier checkToken(uint _tokenId) {
     require(!tokenFreezed(_tokenId));
@@ -78,7 +87,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Throws if msg.sender isn't minter contract address
+   * @dev Throws if the `msg.sender` isn't the minter
    */
   modifier onlyMinter() {
     require(msg.sender == minter);
@@ -86,33 +95,45 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets token name
-   * @return string token name
+   * @dev Constructor that register implemented in this contract interfaces
    */
-  function name() public view returns (string) {
+  constructor() public {
+    _registerInterface(INTERFACEID_ERC165);
+    _registerInterface(INTERFACEID_ERC721);
+    _registerInterface(INTERFACEID_ERC721_EXISTS);
+    _registerInterface(INTERFACEID_ERC721_ENUMERABLE);
+    _registerInterface(INTERFACEID_ERC721_METADATA);
+    _registerInterface(INTERFACEID_ERC721_TOKENSOF);
+  }
+
+  /**
+   * @dev Gets the token name
+   * @return string the token name
+   */
+  function name() external view returns (string) {
     return name_;
   }
 
   /**
-   * @dev Gets token symbol
-   * @return string token symbol
+   * @dev Gets the token symbol
+   * @return string the token symbol
    */
-  function symbol() public view returns (string) {
+  function symbol() external view returns (string) {
     return symbol_;
   }
 
   /**
-   * @dev Gets total tokens amount
-   * @return uint total tokens supply
+   * @dev Gets the total tokens amount
+   * @return uint the total tokens value
    */
   function totalSupply() public view returns (uint) {
     return totalSupply_;
   }
 
   /**
-   * @dev Gets any account tokens balance
-   * @param _owner tokens owner (address)
-   * @return uint _owner tokens balance
+   * @dev Gets the given account tokens balance
+   * @param _owner address the tokens owner which balance need to return
+   * @return uint the current given address owned tokens amount
    */
   function balanceOf(address _owner) public view returns (uint) {
     require(_owner != address(0));
@@ -120,29 +141,19 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets token owner by its ID
-   * @param _tokenId token ID (uint)
-   * @return address _tokenId owner
+   * @dev Gets the token owner by its ID
+   * @param _tokenId uint ID of the token the owner of wich need to find 
+   * @return address the `_tokenId` owner
    */
   function ownerOf(uint _tokenId) public view returns (address) {
     require(exists(_tokenId));
     return tokenOwner[_tokenId];
-  }
+  }  
 
   /**
-   * @dev Gets token ID by its allTokens array index
-   * @param _index token's allTokens array index (uint)
-   * @return uint token ID
-   */
-  function tokenByIndex(uint _index) public view returns (uint) {
-    require(allTokens.length > _index);
-    return allTokens[_index];
-  }
-
-  /**
-   * @dev Gets any account owned tokens
-   * @param _owner tokens owner (address)
-   * @return uint[] array of _owner owned tokens
+   * @dev Gets the list of the given address owned tokens
+   * @param _owner address the tokens owner
+   * @return uint[] the list of the specified address owned tokens
    */
   function tokensOf(address _owner) public view returns (uint[]) {
     require(_owner != address(0));
@@ -150,10 +161,11 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets token ID by its owner address and ownedTokens array index
-   * @param _owner token owner (address)
-   * @param _index token allTokens array index (uint)
-   * @return uint token ID
+   * @dev Gets the token ID by its owner address and the `ownedTokens` 
+   * @dev list position
+   * @param _owner address the token owner
+   * @param _index uint the `ownedTokens` array posotion
+   * @return uint the seeking token ID
    */
   function tokenOfOwnerByIndex(address _owner, uint _index) 
     public 
@@ -166,9 +178,19 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets token approved address
-   * @param _tokenId token ID (uint)
-   * @return address _tokenId approved address
+   * @dev Gets the token by its `allTokens` array index
+   * @param _index uint the `allTokens` array position
+   * @return uint the seeking token ID
+   */
+  function tokenByIndex(uint _index) public view returns (uint) {
+    require(allTokens.length > _index);
+    return allTokens[_index];
+  }
+
+  /**
+   * @dev Gets the token approval
+   * @param _tokenId uint the specified token ID
+   * @return address the `_tokenId` approval
    */
   function getApproved(uint _tokenId) public view returns (address) {
     require(exists(_tokenId));
@@ -176,10 +198,10 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets status ofall tokens approved address of any tokens owner
-   * @param _owner tokens owner (address)
-   * @param _spender tokens spender(address)
-   * @return bool approved for all tokens status
+   * @dev Gets the address allowed to spend all the `_owner` tokens  
+   * @param _owner address the tokens owner
+   * @param _spender address the validated account
+   * @return bool the approved for all tokens state
    */
   function isApprovedForAll(address _owner, address _spender) 
     public 
@@ -192,11 +214,11 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to check if _spender address is _tokenId 
-   * @dev token owner or spender
-   * @param _spender validated token spender (address)
-   * @param _tokenId validated token ID (uint)
-   * @return bool validation status
+   * @dev Function to check that the given account is allowed to spend the
+   * @dev specified token
+   * @param _spender address the validated account
+   * @param _tokenId uint ID of the specified token
+   * @return bool the validation result
    */
   function isApprovedOrOwner(address _spender, uint _tokenId) 
     public  
@@ -215,18 +237,18 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to check existence of token
-   * @param _tokenId validated token ID (uint)
-   * @return bool token existence status
+   * @dev Function to check the existence of the token
+   * @param _tokenId uint ID of the validated token
+   * @return bool the token existence
    */
   function exists(uint _tokenId) public view returns (bool) {
     return tokenOwner[_tokenId] != address(0);
   }
 
   /**
-   * @dev Gets token freeze status
-   * @param _tokenId validated token ID (uint)
-   * @return bool token freeze status
+   * @dev Gets the token freeze state
+   * @param _tokenId uint ID of the validated token
+   * @return bool the `_tokenId` freeze state
    */
   function tokenFreezed(uint _tokenId) public view returns (bool) {
     require(exists(_tokenId));
@@ -234,19 +256,9 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets account freeze status
-   * @param _who validated account (address)
-   * @return bool _who freeze status
-   */
-  function isFreezed(address _who) public view returns (bool) {
-    require(_who != address(0));
-    return freezedList[_who];
-  }
-
-  /**
-   * @dev Gets token event ID, needed for checkin
-   * @param _tokenId token ID (uint)
-   * @return uint event ID
+   * @dev Gets the given token event ID
+   * @param _tokenId uint ID of the specified token
+   * @return uint `_tokenId`'s event ID
    */
   function eventId(uint _tokenId) public view returns (uint) {
     require(exists(_tokenId));
@@ -254,9 +266,9 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets any token URI
-   * @param _tokenId token ID (uint)
-   * @return string _tokenId URI
+   * @dev Gets the given token URI
+   * @param _tokenId uint the specified token ID
+   * @return string the `_tokenId` URI
    */
   function tokenURI(uint _tokenId) public view returns (string) {
     require(exists(_tokenId));
@@ -264,7 +276,28 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to transfer tokens
+   * @dev Gets the account freeze state
+   * @param _who address the validated account
+   * @return bool the `_who` account freeze state
+   */
+  function isFreezed(address _who) public view returns (bool) {
+    require(_who != address(0));
+    return freezedList[_who];
+  }
+
+  /**
+   * @dev Gets the inteface support state by its ID
+   * @param _eventId bytes4 validated interface ID
+   * @return bool `true` if supports
+   */
+  function supportsInterface(bytes4 _eventId) external view returns (bool) {
+    return supportedInterfaces[_eventId];
+  }
+
+  /**
+   * @dev Method to transfer token from the `msg.sender` balance or from the 
+   * @dev account that approved `msg.sender` to spend all owned tokens or the 
+   * @dev specified token
    * @param _from token owner (address)
    * @param _to token recepient (address)
    * @param _tokenId sending token ID (uint)
@@ -277,22 +310,21 @@ contract CyberCoin is ERC721, Contactable {
     public 
     canTransfer(_tokenId)
   {
-    require(_from != address(0));
-    require(_to != address(0));
     require(!isFreezed(_to));
 
     _clearApproval(_tokenId);
-    removeToken(_tokenId);
-    addTokenTo(_to, _tokenId);
+    _removeToken(_tokenId);
+    _addTokenTo(_to, _tokenId);
 
     emit Transfer(_from, _to, _tokenId);
   }
 
   /**
-   * @dev Safe method to transfer tokens
-   * @param _from token sender (address)
-   * @param _to token recepient (address)
-   * @param _tokenId sending token ID (uint)
+   * @dev Function to transfer token with onERC721Received() call if the
+   * @dev token recipient is the smart contract
+   * @param _from address the token owner
+   * @param _to address the token recepient
+   * @param _tokenId uint sending token ID
    */
   function safeTransferFrom(
     address _from, 
@@ -306,11 +338,13 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Safe method to transfer tokens with metadata
-   * @param _from token sender (address)
-   * @param _to token recepient (address)
-   * @param _tokenId sending token ID (uint)
-   * @param _data metadata (bytes)
+   * @dev Function to transfer token with onERC721Received() call if the
+   * @dev token recipient is the smart contract and with the additional 
+   * @dev transaction metadata
+   * @param _from address the token owner
+   * @param _to address the token recepient
+   * @param _tokenId uint sending token ID
+   * @param _data bytes metadata
    */
   function safeTransferFrom(
     address _from, 
@@ -321,48 +355,20 @@ contract CyberCoin is ERC721, Contactable {
     public  
     canTransfer(_tokenId)
   {
-    require(_from != address(0));
-    require(_to != address(0));
     require(!isFreezed(_to));
     
     _clearApproval(_tokenId);
-    removeToken(_tokenId);
-    addTokenTo(_to, _tokenId);
-    require(safeContract(_from, _to, _tokenId, _data));
+    _removeToken(_tokenId);
+    _addTokenTo(_to, _tokenId);
+    require(_safeContract(msg.sender, _from, _to, _tokenId, _data));
 
     emit Transfer(_from, _to, _tokenId);
   }
 
   /**
-   * @dev Internal method to call onERC721Received method 
-   * @dev if tokens recepient is contract
-   * @param _from token sender (address)
-   * @param _to token recepient (address)
-   * @param _tokenId sending token ID (uint)
-   * @param _data metadata (bytes)
-   */
-  function safeContract(
-    address _from, 
-    address _to, 
-    uint _tokenId, 
-    bytes _data
-  ) 
-    internal 
-    returns (bool)
-  {
-    if (!_to.isContract()) {
-      ERC721Receiver receiver = ERC721Receiver(_to);
-      require(ERC721_RECEIVED == receiver.onERC721Received(
-        _from, _tokenId, _data
-      ));
-    }
-    return true;
-  }
-
-  /**
-   * @dev Function to approve tokens
-   * @param _spender token spender (address)
-   * @param _tokenId spending token ID (uint)
+   * @dev Function to approve address to spend the owned token
+   * @param _spender address the token spender
+   * @param _tokenId uint ID of the token to be approved
    */
   function approve(address _spender, uint _tokenId) 
     public 
@@ -370,30 +376,29 @@ contract CyberCoin is ERC721, Contactable {
     checkToken(_tokenId)
     checkFreeze
   {
-    require(_spender != ownerOf(_tokenId));
-    require(_spender != address(0));
     require(!isFreezed(_spender));
+    require(_spender != ownerOf(_tokenId));
     tokenApproval[_tokenId] = _spender;
     emit Approval(msg.sender, _spender, _tokenId);
   }
 
   /**
-   * @dev Function to set approval for all owned tokens
-   * @param _spender tokens spender (address)
-   * @param _approve tokens approval status (bool)
+   * @dev Function to set the approval for all owned tokens
+   * @param _spender address the tokens spender
+   * @param _approve bool approval
    */
   function setApprovalForAll(address _spender, bool _approve) 
     public 
     checkFreeze
   {
-    require(_spender != address(0));
     require(!isFreezed(_spender));
     approvedForAll[msg.sender][_spender] = _approve;
+    emit ApprovalForAll(msg.sender, _spender, _approve);
   }
 
   /**
-   * @dev Function to clear approvals from owned token
-   * @param _tokenId spending token ID (uint)
+   * @dev Function to clear approval from owned token
+   * @param _tokenId uint spending token ID
    */
   function clearApproval(uint _tokenId) 
     public 
@@ -404,33 +409,143 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal method to clear approvals from token
-   * @param _tokenId spenging token ID (uint)
+   * @dev Function to burn token
+   * @param _tokenId uint ID of the token to be burned
    */
-  function _clearApproval(uint _tokenId) internal {
-    tokenApproval[_tokenId] = address(0);
-    emit Approval(ownerOf(_tokenId), address(0), _tokenId);
+  function burn(uint _tokenId) public {
+    _burn(msg.sender, _tokenId);
   }
 
   /**
-   * @dev Internal method to add token to account
-   * @param _to token recepient (address)
-   * @param _tokenId sending token ID (uint)
+   * @dev Function to burn token from the account approved msg sender to 
+   * @dev spend it
+   * @param _owner address the token owner
+   * @param _tokenId uint ID of the token to be burned
    */
-  function addTokenTo(address _to, uint _tokenId) internal {
-    require(ownerOf(_tokenId) == address(0));
+  function burnFrom(address _owner, uint _tokenId) public {
+    _burn(_owner, _tokenId);
+  }
 
+  /**
+   * @dev Function to burn tokens
+   * @param _tokenIds uint[] array with the token IDs
+   */
+  function burnTokens(uint[] _tokenIds) public {
+    require(_tokenIds.length > 0);
+    for (uint i = 0; i < _tokenIds.length; i++) {
+      _burn(ownerOf(_tokenIds[i]), _tokenIds[i]);
+    }
+  }
+
+  /**
+   * @dev Function to freeze the given token. After the token was frozen the
+   * @dev token owner cannot transfer or approve this token
+   * @param _tokenId uint ID of token to be frozen
+   */
+  function freezeToken(uint _tokenId) 
+    public 
+    onlyMinter 
+    checkToken(_tokenId) 
+  {
+    require(!tokenFreezed(_tokenId));
+    freezedTokens[_tokenId] = true;
+    emit TokenFreeze(_tokenId);
+  }
+
+  /**
+   * @dev Function to create a token and send it to the specified account 
+   * @param _to address the token recepient
+   * @param _id uint ID of the event for wich the token will be created
+   * @return bool the transaction success state
+   */
+  function mint(address _to, uint _id) 
+    public  
+    onlyMinter 
+    returns (bool)
+  {
+    require(!isFreezed(_to));
+
+    totalSupply_ = totalSupply_.add(1);
+    uint tokenId = totalSupply_;
+    allTokensIndex[tokenId] = allTokens.length;
+    allTokens.push(tokenId);
+    tokenEventId[tokenId] = _id;
+    
+    _addTokenTo(_to, tokenId);
+
+    emit Mint(_to, tokenId);
+    return true;
+  }
+
+  /**
+   * @dev Function to set an account that can mint tokens
+   * @param _minter address the minter contract
+   */
+  function setMinter(address _minter) external onlyOwner {
+    require(_minter != address(0));
+    minter = _minter;
+  }
+
+  /**
+   * @dev Function to freeze or unfreeze given account
+   * @param _who address the account to be freezed
+   * @param _freeze bool `true` to freeze the specified account
+   */
+  function freeze(address _who, bool _freeze) external onlyOwner {
+    require(!isFreezed(_who));
+    freezedList[_who] = _freeze;
+    emit Freeze(_who, _freeze);
+  }
+
+  /**
+   * @dev Internal function to call `onERC721Received` `ERC721Receiver` 
+   * @dev interface function `safeTransferFrom` if the token recepient
+   * @dev is the smart contract
+   * @param _from address the token owner
+   * @param _to address the token recepient
+   * @param _tokenId uint sending token ID
+   * @param _data bytes transaction metadata
+   */
+  function _safeContract(
+    address _operator,
+    address _from, 
+    address _to, 
+    uint _tokenId, 
+    bytes _data
+  ) 
+    internal 
+    returns (bool)
+  {
+    if (_to.isContract()) {
+      ERC721Receiver receiver = ERC721Receiver(_to);
+      require(ERC721_RECEIVED == receiver.onERC721Received(
+        _operator,
+        _from,
+        _tokenId,
+        _data
+      ));
+    }
+
+    return true;
+  }
+
+  /**
+   * @dev Internal function to add token to account
+   * @param _to address the token recepient
+   * @param _tokenId uint sending tokens ID
+   */
+  function _addTokenTo(address _to, uint _tokenId) internal {
     tokenOwner[_tokenId] = _to;
-    balances[_to] = balances[_to].add(1);
+    balances[_to] =  balances[_to].add(1);
     ownedTokensIndex[_tokenId] = ownedTokens[_to].length;
     ownedTokens[_to].push(_tokenId);
   }
 
   /**
-   * @dev Internal method to remove token from account
-   * @param _tokenId owned token ID (uint)
+   * @dev Internal function to remove token from the account
+   * @param _tokenId uint owned token ID
    */
-  function removeToken(uint _tokenId) internal {
+  function _removeToken(uint _tokenId) internal {
     address owner_ = ownerOf(_tokenId);
     tokenOwner[_tokenId] = address(0);
     balances[owner_] = balances[owner_].sub(1);
@@ -447,47 +562,18 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to set token URI
-   * @param _tokenId token ID (uint)
-   * @param _uri token URI (string)
+   * @dev Internal function to clear approvals from the token
+   * @param _tokenId uint approved token ID
    */
-  function setTokenURI(uint _tokenId, string _uri) internal {
-    require(exists(_tokenId));
-    tokenURIs[_tokenId] = _uri;
-  }
-
-  /**
-   * @dev Function to burn token
-   * @param _tokenId token ID (uint)
-   */
-  function burn(uint _tokenId) public {
-    _burn(msg.sender, _tokenId);
-  }
-
-  /**
-   * @dev Function to burn token from any account approved msg sender
-   * @param _owner token owner (address)
-   * @param _tokenId token ID (uint)
-   */
-  function burnFrom(address _owner, uint _tokenId) public {
-    _burn(_owner, _tokenId);
-  }
-
-  /**
-   * @dev Function to burn tokens
-   * @param _tokenIds array with token IDs (uint[])
-   */
-  function burnTokens(uint[] _tokenIds) public {
-    require(_tokenIds.length > 0);
-    for (uint i = 0; i < _tokenIds.length; i++) {
-      _burn(ownerOf(_tokenIds[i]), _tokenIds[i]);
-    }
+  function _clearApproval(uint _tokenId) internal {
+    tokenApproval[_tokenId] = address(0);
+    emit Approval(ownerOf(_tokenId), address(0), _tokenId);
   }
 
   /**
    * @dev Internal function to burn token
-   * @param _from token owner (address)
-   * @param _tokenId token ID (uint)
+   * @param _from address the token owner
+   * @param _tokenId uint ID of the token that will be burned
    */
   function _burn(address _from, uint _tokenId) 
     internal 
@@ -498,7 +584,7 @@ contract CyberCoin is ERC721, Contactable {
     require(!isFreezed(_from));
 
     totalSupply_ = totalSupply_.sub(1);
-    removeToken(_tokenId);
+    _removeToken(_tokenId);
     _clearApproval(_tokenId);
 
     emit Burn(_from, _tokenId);
@@ -506,70 +592,22 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to freeze token
-   * @dev so then owner can't transfer or approve this token
-   * @param _tokenId ID of token to be freezed (uint)
-   */  
-  function freezeToken(uint _tokenId) 
-    public 
-    onlyMinter 
-    checkToken(_tokenId) 
-  {
-    require(!tokenFreezed(_tokenId));
-    freezedTokens[_tokenId] = true;
-    emit TokenFreeze(_tokenId);
+   * @dev Function to set token URI
+   * @param _tokenId uint the token ID
+   * @param _uri string the token URI that will be set
+   */
+  function _setTokenURI(uint _tokenId, string _uri) internal {
+    require(exists(_tokenId));
+    tokenURIs[_tokenId] = _uri;
   }
 
   /**
-   * @dev Function to create a token and send it to any account 
-   * @param _to token recepient (address)
-   * @param _id new token ID (uint)
-   * @param _uri new token URI (string)
-   * @return bool method validation status
+   * @dev Internal function to register support of an interface
+   * @param _interfaceId bytes4 ID of the interface to be registered
    */
-  function mint(address _to, uint _id, string _uri) 
-    public  
-    onlyMinter 
-    returns (bool)
-  {
-    require(address(_to) != address(0));
-
-    totalSupply_ = totalSupply_.add(1);
-    uint tokenId = totalSupply_;
-    require(!exists(tokenId));
-    allTokensIndex[tokenId] = allTokens.length;
-    allTokens.push(tokenId);
-    tokenEventId[tokenId] = _id;
-    tokenURIs[tokenId] = _uri;
-    
-    addTokenTo(_to, tokenId);
-    bytes memory empty;
-    require(safeContract(minter, _to, tokenId, empty));
-
-    emit Mint(_to, tokenId);
-    return true;
-  }
-
-  /**
-   * @dev Function to set an account that can create new tokens 
-   * @dev (available only for owner)
-   * @param _minter minter contract (address)
-   */
-  function setMinter(address _minter) external onlyOwner {
-    require(_minter != address(0));
-    minter = _minter;
-  }
-
-  /**
-   * @dev Function to freeze or unfreeze any account
-   * @dev (available only for owner)
-   * @param _who account to be freezed (address)
-   * @param _freeze freeze status (true for freeze, false for unfreeze)
-   */
-  function freeze(address _who, bool _freeze) external onlyOwner {
-    require(!isFreezed(_who));
-    freezedList[_who] = _freeze;
-    emit Freeze(_who, _freeze);
+  function _registerInterface(bytes4 _interfaceId) internal {
+    require(_interfaceId != 0xffffffff);
+    supportedInterfaces[_interfaceId] = true;  
   }
 
 }
