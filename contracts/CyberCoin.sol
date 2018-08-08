@@ -25,7 +25,7 @@ contract CyberCoin is ERC721, Contactable {
   bytes4 internal constant INTERFACEID_ERC721_ENUMERABLE = 0x780e9d63;
   bytes4 internal constant INTERFACEID_ERC721_METADATA = 0x5b5e139f;
   bytes4 internal constant INTERFACEID_ERC721_TOKENSOF = 0x5a3f2672;
-  
+
   uint internal totalSupply_;
   uint[] internal allTokens;
   address public minter;
@@ -70,19 +70,19 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Throws if the `msg.sender` account frozen
-   */
-  modifier checkFreeze() {
-    require(!isFreezed(msg.sender));
-    _;
-  }
-
-  /**
    * @dev Throws if the specified token frozen
    * @param _tokenId uint the validated token ID
    */
   modifier checkToken(uint _tokenId) {
     require(!tokenFreezed(_tokenId));
+    _;
+  }
+
+  /**
+   * @dev Throws if the `msg.sender` account frozen
+   */
+  modifier checkFreeze() {
+    require(!isFreezed(msg.sender));
     _;
   }
 
@@ -409,35 +409,6 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to burn token
-   * @param _tokenId uint ID of the token to be burned
-   */
-  function burn(uint _tokenId) public {
-    _burn(msg.sender, _tokenId);
-  }
-
-  /**
-   * @dev Function to burn token from the account approved msg sender to 
-   * @dev spend it
-   * @param _owner address the token owner
-   * @param _tokenId uint ID of the token to be burned
-   */
-  function burnFrom(address _owner, uint _tokenId) public {
-    _burn(_owner, _tokenId);
-  }
-
-  /**
-   * @dev Function to burn tokens
-   * @param _tokenIds uint[] array with the token IDs
-   */
-  function burnTokens(uint[] _tokenIds) public {
-    require(_tokenIds.length > 0);
-    for (uint i = 0; i < _tokenIds.length; i++) {
-      _burn(ownerOf(_tokenIds[i]), _tokenIds[i]);
-    }
-  }
-
-  /**
    * @dev Function to freeze the given token. After the token was frozen the
    * @dev token owner cannot transfer or approve this token
    * @param _tokenId uint ID of token to be frozen
@@ -568,27 +539,6 @@ contract CyberCoin is ERC721, Contactable {
   function _clearApproval(uint _tokenId) internal {
     tokenApproval[_tokenId] = address(0);
     emit Approval(ownerOf(_tokenId), address(0), _tokenId);
-  }
-
-  /**
-   * @dev Internal function to burn token
-   * @param _from address the token owner
-   * @param _tokenId uint ID of the token that will be burned
-   */
-  function _burn(address _from, uint _tokenId) 
-    internal 
-    canTransfer(_tokenId)
-    checkFreeze
-  {
-    require(_from != address(0));
-    require(!isFreezed(_from));
-
-    totalSupply_ = totalSupply_.sub(1);
-    _removeToken(_tokenId);
-    _clearApproval(_tokenId);
-
-    emit Burn(_from, _tokenId);
-    emit Transfer(_from, address(0), _tokenId);
   }
 
   /**
