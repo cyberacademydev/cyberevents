@@ -1,11 +1,9 @@
-
-const hash = require('js-sha3');
-
-const keccak256 = hash.keccak256;
-const sha3 = hash.sha3_256;
+const jsSha3 = require('js-sha3');
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const ZERO_BYTES = '0xffffffff'
+const ZERO_BYTES = '0xffffffffffffffffffffffffffffffffffffffff'
+const keccak256 = jsSha3.keccak_256;
+const sha3 = jsSha3.sha3_256;
 
 const bytes = (obj, val) => {
   obj = obj.toString();

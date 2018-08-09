@@ -9,6 +9,4 @@ const assertRevert = async promise => {
   }
 };
 
-module.exports = {
-  assertRevert
-};
+module.exports = assertRevert;
