@@ -2,4 +2,4 @@
 # Cyber Academy DApp
 We’re going to realize an automated event organization blockchain platform. Our solution is a DApp, where participants can sign up, get their tickets and easily check in on the event. All these operations occur in the network of smart contracts and the entrance tickets are ERC721 tokens
 # License
-Licensed under the [MIT license](https://github.com/cyberevents/cyber-academy-dapp/edit/master/LICENSE), copyright (c) 2018 [Cyber Academy](https://github.com/cyberevents)
+Licensed under the [MIT license](https://github.com/cyberevents/cyber-academy-dapp/edit/master/LICENSE), copyright (c) [Cyber Academy](https://github.com/cyberevents)
