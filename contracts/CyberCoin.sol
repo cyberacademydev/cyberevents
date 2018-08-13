@@ -425,10 +425,10 @@ contract CyberCoin is ERC721, Contactable {
   /**
    * @dev Function to create a token and send it to the specified account
    * @param _to address the token recepient
-   * @param _id uint ID of the event for wich the token will be created
+   * @param _eventId uint ID of the event for wich the token will be created
    * @return bool the transaction success state
    */
-  function mint(address _to, uint _id)
+  function mint(address _to, uint _eventId)
     public
     onlyMinter
     returns (bool)
@@ -439,8 +439,7 @@ contract CyberCoin is ERC721, Contactable {
     uint tokenId = totalSupply_;
     allTokensIndex[tokenId] = allTokens.length;
     allTokens.push(tokenId);
-    tokenEventId[tokenId] = _id;
-
+    tokenEventId[tokenId] = _eventId;
     _addTokenTo(_to, tokenId);
 
     emit Mint(_to, tokenId);

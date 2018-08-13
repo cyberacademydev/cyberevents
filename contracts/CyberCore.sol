@@ -12,7 +12,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract CyberCore is Contactable {
   using SafeMath for uint;
 
-  CyberCoin public cyber;
+  CyberCoin public token;
   
   uint public lastEvent;
   uint[] public allEvents;
@@ -39,11 +39,11 @@ contract CyberCore is Contactable {
 
   /**
    * @dev Constructor that sets current CyberCoin address to interact with
-   * @param _cyber address CyberCoin contract
+   * @param _token address CyberCoin contract
    */
-  constructor(CyberCoin _cyber) public {
-    require(address(_cyber) != address(0));
-    cyber = _cyber;
+  constructor(CyberCoin _token) public {
+    require(address(_token) != address(0));
+    token = _token;
   }
 
   /**
@@ -208,8 +208,8 @@ contract CyberCore is Contactable {
     require(msg.value >= events[_id].ticketPrice);
     require(msg.sender != owner);
     require(!events[_id].canceled);
-    require(cyber.mint(msg.sender, _id));
-    events[_id].ticketsAmount--;
+    require(token.mint(msg.sender, _id));
+    events[_id].ticketsAmount.sub(1);
   }
 
   /**
@@ -228,13 +228,13 @@ contract CyberCore is Contactable {
     public 
     onlyOwner 
   {
-    uint id = cyber.eventId(_tokenId);
-    require(cyber.isApprovedOrOwner(_participant, _tokenId));
-    require(!cyber.tokenFreezed(_tokenId));
+    uint id = token.eventId(_tokenId);
+    require(token.isApprovedOrOwner(_participant, _tokenId));
+    require(!token.tokenFreezed(_tokenId));
     require(events[id].endTime > now);
     require(!events[id].canceled);
 
-    cyber.freezeToken(_tokenId);
+    token.freezeToken(_tokenId);
 
     uint cashback = (
       events[id].ticketPrice.div(100).

@@ -4,10 +4,13 @@ const CyberCoin = artifacts.require('CyberCoin');
 contract('CyberCore', function([], accounts) {
 
   let token;
+  let core;
 
   beforeEach('set up contract for each test', async function() {
     token = await CyberCoin.new();
     core = await CyberCore.new(token.address);
   });
+
+  
   
 });

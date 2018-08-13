@@ -1,5 +1,5 @@
-const CyberCoin = artifacts.require("./CyberCoin.sol");
-const CyberCore = artifacts.require("./CyberCore.sol");
+const CyberCoin = artifacts.require('CyberCoin');
+const CyberCore = artifacts.require('CyberCore');
 
 module.exports = function (deployer, network, accounts) {
   deployer.deploy(CyberCoin).then(function() {
