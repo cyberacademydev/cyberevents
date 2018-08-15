@@ -9,7 +9,7 @@ contract('CyberCoin', function(accounts) {
 
   let token;
 
-  beforeEach('set up contract for each test', async function() {
+  beforeEach('deploy new contract for each test', async function() {
     token = await CyberCoin.new({ from: creator });
   });
 
@@ -158,7 +158,7 @@ contract('CyberCoin', function(accounts) {
     });
   });
 
-  context('approve', function() {
+  describe('approve', function() {
     const owner = accounts[0];
     const spender = accounts[1];
     const tokenId = 1;
@@ -169,12 +169,11 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint and approve tokens', async function() {
       await token.setMinter(owner, { from: creator });
-      await token.mint(owner, eventId, { from: owner });
+      await token.mint(owner, eventId, { from: creator });
       let result = await token.approve(spender, tokenId, { from: owner });
       logs = result.logs;
     });
 
-    // FIXME
     context('when successful', function() {
       it('sets the token approval to the given address', async function() {
         assert.equal(
@@ -211,22 +210,178 @@ contract('CyberCoin', function(accounts) {
         assertRevert(token.approve(owner, tokenId, { from: spender }));
       });
     });
+
+    context('when the specified token frozen', function() {
+      it('reverts', async function() {
+        await token.freezeToken(tokenId, { from: creator });
+        assertRevert(await token.clearApproval(tokenId, { from: owner }));
+      });
+    });
   });
 
-  // TODO transfer functions test
-  context('transfer', function() {
-    const from = accounts[0];
-    const to = accounts[1];
-    const firstTokenId = 1;
-    const secondTokenId = 2;
-    const unknownTokenId = 3;
+  describe('clear approval', function() {
+    const owner = accounts[0];
+    const spender = accounts[1];
+    const tokenId = 1;
+    const unknownTokenId = 2;
     const eventId = 1;
 
-    beforeEach('mint tokens', async function() {
-      await token.mint(from, firstTokenId, eventId);
-      await token.mint(to, secondTokenId, eventId);
+    let logs = null;
+
+    beforeEach('mint and approve tokens', async function() {
+      await token.setMinter(owner, { from: creator });
+      await token.mint(owner, eventId, { from: owner });
+      await token.approve(spender, tokenId, { from: owner });
+      const result = await token.clearApproval(tokenId, { from: owner });
+      logs = result.logs;
     });
 
-    context('transferFrom', function() {});
+    context('when successful', function() {
+      it('sets the token approval to the zero address', async function() {
+        assert.equal(
+          bnUtils.parseString(await token.getApproved(tokenId)),
+          solidity.ZERO_ADDRESS
+        );
+      });
+
+      it('emits an Approval event with zero address as spender', async function() {
+        assert.equal(logs.length, 1);
+        assert.equal(logs[0].event, 'Approval');
+        assert.equal(logs[0].args._owner, owner);
+        assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
+        assert.equal(bnUtils.parseNumber(logs[0].args._tokenId), tokenId);
+      });
+    });
+
+    context("when the given token doesn't exist", function() {
+      it('reverts', async function() {
+        assertRevert(token.clearApproval(unknownTokenId, { from: owner }));
+      });
+    });
+
+    context("when the msg.sender doesn't own the given token", function() {
+      it('reverts', async function() {
+        assertRevert(token.clearApproval(tokenId, { from: spender }));
+      });
+    });
+
+    context('when the specified token frozen', function() {
+      it('reverts', async function() {
+        await token.freezeToken(tokenId, { from: creator });
+        assertRevert(await token.clearApproval(tokenId, { from: owner }));
+      });
+    });
+  });
+
+  // TODO transfer functions test helo
+  describe('transfer', function() {
+    const firstAccount = accounts[0];
+    const secondAccount = accounts[1];
+    const firstTokenId = 1;
+    const secondTokenId = 2;
+    const thirdTokenId = 3;
+    const unknownTokenId = 4;
+    const eventId = 1;
+
+    let from = null;
+    let to = null;
+    let tokenId = null;
+    let logs = null;
+
+    beforeEach('mint and approve tokens', async function() {
+      await token.setMinter(creator, { from: creator });
+      await token.mint(firstAccount, eventId, { from: creator });
+      await token.mint(secondAccount, eventId, { from: creator });
+      await token.mint(secondAccount, eventId, { from: creator });
+      await token.approve(firstAccount, secondTokenId, { from: secondAccount });
+    });
+
+    const _clearApproval = function() {
+      it('sets the token approval to zero address', async function() {
+        assert.equal(
+          bnUtils.parseString(await token.getApproved(tokenId)),
+          solidity.ZERO_ADDRESS
+        );
+      });
+    };
+
+    const _removeToken = function(ownedToken) {
+      it('decreases the sender balance', async function() {
+        assert.equal(bnUtils.parseNumber(await token.balanceOf(from)), 1);
+      });
+
+      it('moves the last token to the sent token position in the ownedTokens list', async function() {
+        assert.equal(
+          bnUtils.parseJSON(await token.tokensOf(from)),
+          '["' + ownedToken.toString() + '"]'
+        );
+      });
+    };
+
+    const _addTokenTo = function(ownedToken) {
+      it('increases the recepient balance', async function() {
+        assert.equal(bnUtils.parseNumber(await token.balanceOf(to)), 2);
+      });
+
+      it('sets the token owner to recepient', async function() {
+        assert.equal(bnUtils.parseString(await token.ownerOf(tokenId)), to);
+      });
+
+      it("adds token to the list of the recepient's owned tokens", async function() {
+        assert.equal(
+          bnUtils.parseJSON(await token.tokensOf(to)),
+          '["' + ownedToken.toString() + '","' + tokenId.toString() + '"]'
+        );
+      });
+    };
+
+    const approvalEvent = function() {
+      it('emits an Approval event', async function() {
+        assert.equal(logs.length, 2);
+        assert.equal(logs[0].event, 'Approval');
+        assert.equal(logs[0].args._owner, from);
+        assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
+        assert.equal(logs[0].args._tokenId, tokenId);
+      });
+    };
+
+    const transferEvent = function() {
+      it('emits a Transfer event', async function() {
+        assert.equal(logs.length, 2);
+        assert.equal(logs[1].event, 'Transfer');
+        assert.equal(logs[1].args._from, from);
+        assert.equal(logs[1].args._to, to);
+        assert.equal(logs[1].args._tokenId, tokenId);
+      });
+    };
+
+    describe('transferFrom', function() {
+      context('transfer the token owned by msg.sender', function() {
+        from = secondAccount;
+        to = firstAccount;
+        tokenId = secondTokenId;
+
+        beforeEach('transfer token', async function() {
+          const result = await token.transferFrom(from, to, tokenId, {
+            from: from
+          });
+          logs = result.logs;
+        });
+
+        context('when successfull', function() {
+          _clearApproval();
+          _removeToken(thirdTokenId);
+          _addTokenTo(firstTokenId);
+          approvalEvent();
+          transferEvent();
+        });
+      });
+
+      context('transfer the token approved to msg.sender', function() {});
+    });
+
+    context('safeTransferFrom', function() {});
+
+    context('safeTransferFrom with additional bytes metadata', function() {});
   });
 });
