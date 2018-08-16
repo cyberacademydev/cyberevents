@@ -6,6 +6,7 @@ import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/AddressUtils.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /**
  * @title Cyber Academy DApp ERC721 modified token
  * @author Nick - [Facebook](facebook.com/k.kornilov01), [GitHub](github.com/rjkz808)
@@ -274,6 +275,44 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
+   * @dev Function to approve address to spend the owned token
+   * @param _spender address the token spender
+   * @param _tokenId uint ID of the token to be approved
+   */
+  function approve(address _spender, uint _tokenId)
+    public
+    onlyOwnerOf(_tokenId)
+    checkToken(_tokenId)
+  {
+    require(_spender != address(0));
+    require(_spender != ownerOf(_tokenId));
+    tokenApproval[_tokenId] = _spender;
+    emit Approval(msg.sender, _spender, _tokenId);
+  }
+
+  /**
+   * @dev Function to set the approval for all owned tokens
+   * @param _spender address the tokens spender
+   * @param _approve bool approval
+   */
+  function setApprovalForAll(address _spender, bool _approve) public {
+    require(_spender != address(0));
+    approvedForAll[msg.sender][_spender] = _approve;
+    emit ApprovalForAll(msg.sender, _spender, _approve);
+  }
+
+  /**
+   * @dev Function to clear approval from owned token
+   * @param _tokenId uint spending token ID
+   */
+  function clearApproval(uint _tokenId)
+    public
+    onlyOwnerOf(_tokenId)
+  {
+    _clearApproval(_tokenId);
+  }
+
+  /**
    * @dev Method to transfer token from the `msg.sender` balance or from the
    * @dev account that approved `msg.sender` to spend all owned tokens or the
    * @dev specified token
@@ -338,44 +377,6 @@ contract CyberCoin is ERC721, Contactable {
     require(_safeContract(msg.sender, _from, _to, _tokenId, _data));
 
     emit Transfer(_from, _to, _tokenId);
-  }
-
-  /**
-   * @dev Function to approve address to spend the owned token
-   * @param _spender address the token spender
-   * @param _tokenId uint ID of the token to be approved
-   */
-  function approve(address _spender, uint _tokenId)
-    public
-    onlyOwnerOf(_tokenId)
-    checkToken(_tokenId)
-  {
-    require(_spender != address(0));
-    require(_spender != ownerOf(_tokenId));
-    tokenApproval[_tokenId] = _spender;
-    emit Approval(msg.sender, _spender, _tokenId);
-  }
-
-  /**
-   * @dev Function to set the approval for all owned tokens
-   * @param _spender address the tokens spender
-   * @param _approve bool approval
-   */
-  function setApprovalForAll(address _spender, bool _approve) public {
-    require(_spender != address(0));
-    approvedForAll[msg.sender][_spender] = _approve;
-    emit ApprovalForAll(msg.sender, _spender, _approve);
-  }
-
-  /**
-   * @dev Function to clear approval from owned token
-   * @param _tokenId uint spending token ID
-   */
-  function clearApproval(uint _tokenId)
-    public
-    onlyOwnerOf(_tokenId)
-  {
-    _clearApproval(_tokenId);
   }
 
   /**

@@ -4,6 +4,7 @@ import "./CyberCoin.sol";
 import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /**
  * @title Cyber Academy DApp core
  * @author Nick - [Facebook](facebook.com/k.kornilov01), [GitHub](github.com/rjkz808)
