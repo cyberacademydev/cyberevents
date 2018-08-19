@@ -9,7 +9,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title Cyber Academy DApp ERC721 modified token
- * @author Nick - [Facebook](facebook.com/k.kornilov01), [GitHub](github.com/rjkz808)
+ * @author Nick - [Facebook](https://facebook.com/k.kornilov01), [GitHub](https://github.com/rjkz808)
  */
 contract CyberCoin is ERC721, Contactable {
   using AddressUtils for address;
@@ -61,7 +61,7 @@ contract CyberCoin is ERC721, Contactable {
    */
   modifier canTransfer(address _to, uint _tokenId) {
     require(isApprovedOrOwner(msg.sender, _tokenId));
-    require(!tokenFreezed(_tokenId));
+    require(!tokenFrozen(_tokenId));
     require(exists(_tokenId));
     require(_to != address(0));
     _;
@@ -71,8 +71,8 @@ contract CyberCoin is ERC721, Contactable {
    * @dev Throws if the specified token frozen
    * @param _tokenId uint the validated token ID
    */
-  modifier checkToken(uint _tokenId) {
-    require(!tokenFreezed(_tokenId));
+  modifier checkFreeze(uint _tokenId) {
+    require(!tokenFrozen(_tokenId));
     _;
   }
 
@@ -240,7 +240,7 @@ contract CyberCoin is ERC721, Contactable {
    * @param _tokenId uint ID of the validated token
    * @return bool the `_tokenId` freeze state
    */
-  function tokenFreezed(uint _tokenId) public view returns (bool) {
+  function tokenFrozen(uint _tokenId) public view returns (bool) {
     require(exists(_tokenId));
     return freezedTokens[_tokenId];
   }
@@ -271,6 +271,7 @@ contract CyberCoin is ERC721, Contactable {
    * @return bool `true` if supports
    */
   function supportsInterface(bytes4 _eventId) external view returns (bool) {
+    require(_eventId != 0xffffffff);
     return supportedInterfaces[_eventId];
   }
 
@@ -282,7 +283,7 @@ contract CyberCoin is ERC721, Contactable {
   function approve(address _spender, uint _tokenId)
     public
     onlyOwnerOf(_tokenId)
-    checkToken(_tokenId)
+    checkFreeze(_tokenId)
   {
     require(_spender != address(0));
     require(_spender != ownerOf(_tokenId));
@@ -308,6 +309,7 @@ contract CyberCoin is ERC721, Contactable {
   function clearApproval(uint _tokenId)
     public
     onlyOwnerOf(_tokenId)
+    checkFreeze(_tokenId)
   {
     _clearApproval(_tokenId);
   }
@@ -384,12 +386,11 @@ contract CyberCoin is ERC721, Contactable {
    * @dev token owner cannot transfer or approve this token
    * @param _tokenId uint ID of token to be frozen
    */
-  function freezeToken(uint _tokenId)
+  function freeze(uint _tokenId)
     public
     onlyMinter
-    checkToken(_tokenId)
+    checkFreeze(_tokenId)
   {
-    require(!tokenFreezed(_tokenId));
     freezedTokens[_tokenId] = true;
     _clearApproval(_tokenId);
     emit TokenFreeze(_tokenId);
@@ -497,7 +498,7 @@ contract CyberCoin is ERC721, Contactable {
    * @dev Internal function to clear approvals from the token
    * @param _tokenId uint approved token ID
    */
-  function _clearApproval(uint _tokenId) internal checkToken(_tokenId) {
+  function _clearApproval(uint _tokenId) internal {
     tokenApproval[_tokenId] = address(0);
     emit Approval(ownerOf(_tokenId), address(0), _tokenId);
   }

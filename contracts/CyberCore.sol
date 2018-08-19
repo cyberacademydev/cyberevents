@@ -159,10 +159,11 @@ contract CyberCore is Contactable {
     public 
     onlyOwner
   {
-    require(_startTime > now);
+    // require(_startTime > now);
     require(_endTime > _startTime);
     require(_ticketsAmount > 0);
     require(_speakers.length > 0);
+    require(_ownerPercent.add(_speakersPercent) <= 100);
 
     lastEvent++;
     address[] memory participants_;
@@ -231,11 +232,11 @@ contract CyberCore is Contactable {
   {
     uint id = token.eventId(_tokenId);
     require(token.isApprovedOrOwner(_participant, _tokenId));
-    require(!token.tokenFreezed(_tokenId));
+    require(!token.tokenFrozen(_tokenId));
     require(events[id].endTime > now);
     require(!events[id].canceled);
 
-    token.freezeToken(_tokenId);
+    token.freeze(_tokenId);
 
     uint cashback = (
       events[id].ticketPrice.div(100).

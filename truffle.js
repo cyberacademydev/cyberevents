@@ -3,30 +3,33 @@ require('babel-polyfill');
 
 module.exports = {
   networks: {
-    main: {
-      host: "127.0.0.1",
-      port: 7545,
-      network_id: "*"
+    live: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/' + infura_apikey);
+      },
+      network_id: '1'
     },
     ropsten: {
-      host: "127.0.0.1",
-      port: 7545,
-      network_id: "*"
+      provider: function() {
+        return new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/' + infura_apikey);
+      },
+      network_id: '3'
     },
     kovan: {
-      host: "127.0.0.1",
-      port: 7545,
-      network_id: "*"
+      provider: function() {
+        return new HDWalletProvider(mnemonic, 'https://kovan.infura.io/' + infura_apikey);
+      },
+      network_id: '4'
     },
     ganache: {
-      host: "127.0.0.1",
+      host: '127.0.0.1',
       port: 7545,
-      network_id: "*"
+      network_id: '*'
     },
     ganachecli: {
-      host: "127.0.0.1",
+      host: '127.0.0.1',
       port: 8545,
-      network_id: "*"
+      network_id: '*'
     }
   }
 };

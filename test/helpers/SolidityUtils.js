@@ -5,9 +5,9 @@ const keccak256 = jsSha3.keccak_256;
 const sha3 = jsSha3.sha3_256;
 
 const bytes = (obj, val) => {
-  obj = obj.toString();
   val = parseInt(val);
-  if (obj == '0') return '0x' + 'f' * val;
+  if (obj === 0) return '0x' + 'f' * (val * 2);
+  obj = obj.toString();
   return '0x' + obj.slice(0, val * 2);
 };
 
