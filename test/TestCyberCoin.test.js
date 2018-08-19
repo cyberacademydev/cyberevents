@@ -131,7 +131,10 @@ contract('CyberCoin', function(accounts) {
 
     context('when successfull', function() {
       it('returns token, that is on the given position in the ownedTokens list of the specified address', async function() {
-        assert.equal(bignumberUtils.parseNumber(await token.tokenOfOwnerByIndex(accounts[0], 0)), 1);
+        assert.equal(
+          bignumberUtils.parseNumber(await token.tokenOfOwnerByIndex(accounts[0], 0)),
+          1
+        );
       });
     });
 
@@ -203,19 +206,13 @@ contract('CyberCoin', function(accounts) {
 
     context('when the specified operator approval exists', function() {
       it('returns true', async function() {
-        assert.equal(
-          await token.isApprovedForAll(accounts[0], accounts[1]),
-          true
-        );
+        assert.equal(await token.isApprovedForAll(accounts[0], accounts[1]), true);
       });
     });
 
     context("when the specified address doesn't approve all its tokens", function() {
       it('returns false', async function() {
-        assert.equal(
-          await token.isApprovedForAll(accounts[1], accounts[0]),
-          false
-        );
+        assert.equal(await token.isApprovedForAll(accounts[1], accounts[0]), false);
       });
     });
 
@@ -269,7 +266,7 @@ contract('CyberCoin', function(accounts) {
       });
     });
   });
-  
+
   describe('exists', function() {
     beforeEach('mint a token', async function() {
       await token.setMinter(creator, { from: creator });
@@ -438,7 +435,10 @@ contract('CyberCoin', function(accounts) {
 
     context('when successful', function() {
       it('sets the token approval to the zero address', async function() {
-        assert.equal(bignumberUtils.parseString(await token.getApproved(tokenId)), solidity.ZERO_ADDRESS);
+        assert.equal(
+          bignumberUtils.parseString(await token.getApproved(tokenId)),
+          solidity.ZERO_ADDRESS
+        );
       });
 
       it('emits an Approval event with zero address as spender', async function() {
@@ -487,7 +487,7 @@ contract('CyberCoin', function(accounts) {
       await token.approve(accounts[0], secondTokenId, { from: accounts[1] });
     });
 
-    const transfer = function(from, to, unknown) {
+    const transferFrom = function(from, to, unknown) {
       context('when successfull', function() {
         it('sets the token approval to zero address', async function() {
           assert.equal(
@@ -569,6 +569,12 @@ contract('CyberCoin', function(accounts) {
       });
     };
 
+    const safeTransferWithoutDataAccount = function(from, to, unknown) {
+      transferFrom(from, to, unknown);
+    };
+
+    const safeTransferWithoutDataContract = function(from, to, unknown) {};
+
     describe('transferFrom', function() {
       context('transfer the token owned by msg.sender', function() {
         beforeEach('transfer a token', async function() {
@@ -578,7 +584,7 @@ contract('CyberCoin', function(accounts) {
           logs = result.logs;
         });
 
-        transfer(accounts[1], accounts[0], accounts[2]);
+        transferFrom(accounts[1], accounts[0], accounts[2]);
       });
 
       context('transfer the token approved to msg.sender', function() {
@@ -589,12 +595,42 @@ contract('CyberCoin', function(accounts) {
           logs = result.logs;
         });
 
-        transfer(accounts[1], accounts[0], accounts[2]);
+        transferFrom(accounts[1], accounts[0], accounts[2]);
       });
     });
 
     // TODO: safeTransferFrom without additional data
-    describe('safeTransferFrom without additional data', function() {});
+    describe('safeTransferFrom without additional data', function() {
+      context('transfer the token to the default account', function() {
+        context('transfer the token owned by msg.sender', function() {
+          beforeEach('transfer a token', async function() {
+            const result = await token.safeTransferFrom(accounts[1], accounts[0], secondTokenId, {
+              from: accounts[1]
+            });
+            logs = result.logs;
+          });
+
+          safeTransferWithoutDataAccount(accounts[1], accounts[0], accounts[2]);
+        });
+
+        context('transfer the token approved to msg.sender', function() {
+          beforeEach('transfer a token', async function () {
+            const result = await token.safeTransferFrom(accounts[1], accounts[0], secondTokenId, {
+              from: accounts[0]
+            });
+            logs = result.logs;
+          });
+
+          safeTransferWithoutDataAccount(accounts[1], accounts[0], accounts[2]);
+        });
+      });
+
+      context('transfer the token to the smart contract', function() {
+        context('transfer the token owned by msg.sender', function() {});
+
+        context('transfer the token approved to msg.sender', function() {});
+      });
+    });
 
     // TODO: safeTransferFrom with additional bytes data
     describe('safeTransferFrom with additional bytes data', function() {});
