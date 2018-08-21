@@ -1,5 +1,5 @@
 {
-  "name": "Cyber Academy DApp",
+  "name": "cyber-academy-dapp",
   "version": "0.0.1",
   "description": "# Cyber Academy DApp\rWe're going to integrate blockchain technology into the events organization! We're always open for our community!",
   "main": "truffle-config.js",
