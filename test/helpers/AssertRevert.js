@@ -1,3 +1,7 @@
+/**
+ * @author the code is taken from OpenZeppelin Solidity
+ * (https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/test/helpers/assertRevert.js)
+ */
 
 const assertRevert = async promise => {
   try {

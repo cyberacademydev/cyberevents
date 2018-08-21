@@ -1,5 +1,6 @@
 const assertRevert = require('./helpers/AssertRevert');
 const bignumberUtils = require('./helpers/BignumberUtils');
+const sendTransaction = require('./helpers/SendTransaction');
 const solidity = require('./helpers/SolidityUtils');
 
 const CyberCoin = artifacts.require('CyberCoin');
@@ -130,12 +131,15 @@ contract('CyberCoin', function(accounts) {
     });
 
     context('when successfull', function() {
-      it('returns token, that is on the given position in the ownedTokens list of the specified address', async function() {
-        assert.equal(
-          bignumberUtils.parseNumber(await token.tokenOfOwnerByIndex(accounts[0], 0)),
-          1
-        );
-      });
+      it(
+        'returns token, that is on the given position in the ownedTokens list of the specified address', 
+        async function() {
+          assert.equal(
+            bignumberUtils.parseNumber(await token.tokenOfOwnerByIndex(accounts[0], 0)),
+            1
+          );
+        }
+      );
     });
 
     context('when zero address given', function() {
@@ -346,13 +350,13 @@ contract('CyberCoin', function(accounts) {
 
     context("when the contract doesn't support the specified interface", function() {
       it('returns false', async function() {
-        assert.equal(await token.supportsInterface(solidity.bytes('12345678', 4)), false);
+        assert.equal(await token.supportsInterface('0xa4896a3f'), false);
       });
     });
 
     context('when zero bytes given', function() {
       it('reverts', async function() {
-        await assertRevert(token.supportsInterface(solidity.bytes(0, 4)));
+        await assertRevert(token.supportsInterface('0xffffffff'));
       });
     });
   });
@@ -476,6 +480,7 @@ contract('CyberCoin', function(accounts) {
     const thirdTokenId = 3;
     const unknownTokenId = 4;
     const eventId = 1;
+    const data = '0x00';
 
     let logs = null;
 
@@ -487,25 +492,42 @@ contract('CyberCoin', function(accounts) {
       await token.approve(accounts[0], secondTokenId, { from: accounts[1] });
     });
 
+    const _clearApproval = function() {
+      it('sets the token approval to zero address', async function() {
+        assert.equal(
+          bignumberUtils.parseString(await token.getApproved(secondTokenId)),
+          solidity.ZERO_ADDRESS
+        );
+      });
+    };
+
+    const _removeToken = function() {
+      it('decreases the sender balance', async function() {
+        assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[1])), 1);
+      });
+
+      it('moves the last token to the sent token position in the ownedTokens list', async function() {
+        assert.equal(
+          bignumberUtils.parseJSON(await token.tokensOf(accounts[1])),
+          '["' + thirdTokenId.toString() + '"]'
+        );
+      });
+    };
+
+    const approvalEvent = function() {
+      it('emits an Approval event', async function() {
+        assert.equal(logs.length, 2);
+        assert.equal(logs[0].event, 'Approval');
+        assert.equal(logs[0].args._owner, accounts[1]);
+        assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
+        assert.equal(logs[0].args._tokenId, secondTokenId);
+      });
+    };
+
     const transferFrom = function() {
       context('when successfull', function() {
-        it('sets the token approval to zero address', async function() {
-          assert.equal(
-            bignumberUtils.parseString(await token.getApproved(secondTokenId)),
-            solidity.ZERO_ADDRESS
-          );
-        });
-
-        it('decreases the sender balance', async function() {
-          assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[1])), 1);
-        });
-
-        it('moves the last token to the sent token position in the ownedTokens list', async function() {
-          assert.equal(
-            bignumberUtils.parseJSON(await token.tokensOf(accounts[1])),
-            '["' + thirdTokenId.toString() + '"]'
-          );
-        });
+        _clearApproval();
+        _removeToken();
 
         it('increases the recepient balance', async function() {
           assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[0])), 2);
@@ -522,13 +544,7 @@ contract('CyberCoin', function(accounts) {
           );
         });
 
-        it('emits an Approval event', async function() {
-          assert.equal(logs.length, 2);
-          assert.equal(logs[0].event, 'Approval');
-          assert.equal(logs[0].args._owner, accounts[1]);
-          assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
-          assert.equal(logs[0].args._tokenId, secondTokenId);
-        });
+        approvalEvent();
 
         it('emits a Transfer event', async function() {
           assert.equal(logs.length, 2);
@@ -579,52 +595,41 @@ contract('CyberCoin', function(accounts) {
           );
         });
       });
+
+      context("when the specified token doesn't exist", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            token.transferFrom(accounts[1], accounts[0], unknownTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
     };
 
     const safeTransferFromToAccount = function() {
-      context('when successfull', function () {
-        it('sets the token approval to zero address', async function () {
-          assert.equal(
-            bignumberUtils.parseString(await token.getApproved(secondTokenId)),
-            solidity.ZERO_ADDRESS
-          );
-        });
+      context('when successfull', function() {
+        _clearApproval();
+        _removeToken();
 
-        it('decreases the sender balance', async function () {
-          assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[1])), 1);
-        });
-
-        it('moves the last token to the sent token position in the ownedTokens list', async function () {
-          assert.equal(
-            bignumberUtils.parseJSON(await token.tokensOf(accounts[1])),
-            '["' + thirdTokenId.toString() + '"]'
-          );
-        });
-
-        it('increases the recepient balance', async function () {
+        it('increases the recepient balance', async function() {
           assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[0])), 2);
         });
 
-        it('sets the token owner to recepient', async function () {
+        it('sets the token owner to recepient', async function() {
           assert.equal(bignumberUtils.parseString(await token.ownerOf(secondTokenId)), accounts[0]);
         });
 
-        it("adds token to the list of the recepient's owned tokens", async function () {
+        it("adds token to the list of the recepient's owned tokens", async function() {
           assert.equal(
             bignumberUtils.parseJSON(await token.tokensOf(accounts[0])),
             '["' + firstTokenId.toString() + '","' + secondTokenId.toString() + '"]'
           );
         });
 
-        it('emits an Approval event', async function () {
-          assert.equal(logs.length, 2);
-          assert.equal(logs[0].event, 'Approval');
-          assert.equal(logs[0].args._owner, accounts[1]);
-          assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
-          assert.equal(logs[0].args._tokenId, secondTokenId);
-        });
+        approvalEvent();
 
-        it('emits a Transfer event', async function () {
+        it('emits a Transfer event', async function() {
           assert.equal(logs.length, 2);
           assert.equal(logs[1].event, 'Transfer');
           assert.equal(logs[1].args._from, accounts[1]);
@@ -633,44 +638,49 @@ contract('CyberCoin', function(accounts) {
         });
       });
 
-      context('when zero address specified as token owner', function () {
-        it('reverts', async function () {
-          await assertRevert(token.safeTransferFrom(
-              solidity.ZERO_ADDRESS,
-              accounts[0],
-              secondTokenId,
-              {from: accounts[1]}
-            ));
+      context('when zero address specified as token owner', function() {
+        it('reverts', async function() {
+          await assertRevert(
+            token.safeTransferFrom(solidity.ZERO_ADDRESS, accounts[0], secondTokenId, {
+              from: accounts[1]
+            })
+          );
         });
       });
 
-      context('when zero address specified as token recepient', function () {
-        it('reverts', async function () {
-          await assertRevert(token.safeTransferFrom(
-              accounts[1],
-              solidity.ZERO_ADDRESS,
-              secondTokenId,
-              {from: accounts[1]}
-            ));
+      context('when zero address specified as token recepient', function() {
+        it('reverts', async function() {
+          await assertRevert(
+            token.safeTransferFrom(accounts[1], solidity.ZERO_ADDRESS, secondTokenId, {
+              from: accounts[1]
+            })
+          );
         });
       });
 
-      context("when msg.sender isn't owner or approval of the specified token", function () {
-        it('reverts', async function () {
-          await assertRevert(token.safeTransferFrom(
-              accounts[1],
-              accounts[0],
-              secondTokenId,
-              {from: accounts[2]}
-            ));
+      context("when msg.sender isn't owner or approval of the specified token", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            token.safeTransferFrom(accounts[1], accounts[0], secondTokenId, { from: accounts[2] })
+          );
         });
       });
 
-      context('when the specified token frozen', function () {
-        it('reverts', async function () {
+      context('when the specified token frozen', function() {
+        it('reverts', async function() {
           await token.freeze(secondTokenId, { from: creator });
           await assertRevert(
             token.safeTransferFrom(accounts[1], accounts[0], secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context("when the specified token doesn't exist", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            token.transferFrom(accounts[1], accounts[0], unknownTokenId, {
               from: accounts[1]
             })
           );
@@ -680,23 +690,8 @@ contract('CyberCoin', function(accounts) {
 
     const safeTransferFromToContract = function() {
       context('when successfull', function() {
-        it('sets the token approval to zero address', async function() {
-          assert.equal(
-            bignumberUtils.parseString(await token.getApproved(secondTokenId)),
-            solidity.ZERO_ADDRESS
-          );
-        });
-
-        it('decreases the sender balance', async function() {
-          assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[1])), 1);
-        });
-
-        it('moves the last token to the sent token position in the ownedTokens list', async function() {
-          assert.equal(
-            bignumberUtils.parseJSON(await token.tokensOf(accounts[1])),
-            '["' + thirdTokenId.toString() + '"]'
-          );
-        });
+        _clearApproval();
+        _removeToken();
 
         it('increases the recepient balance', async function() {
           assert.equal(bignumberUtils.parseNumber(await token.balanceOf(receiver.address)), 1);
@@ -716,13 +711,7 @@ contract('CyberCoin', function(accounts) {
           );
         });
 
-        it('emits an Approval event', async function() {
-          assert.equal(logs.length, 2);
-          assert.equal(logs[0].event, 'Approval');
-          assert.equal(logs[0].args._owner, accounts[1]);
-          assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
-          assert.equal(logs[0].args._tokenId, secondTokenId);
-        });
+        approvalEvent();
 
         it('emits a Transfer event', async function() {
           assert.equal(logs.length, 2);
@@ -774,15 +763,220 @@ contract('CyberCoin', function(accounts) {
         });
       });
 
-      context('when the specified contract doesn\'t implement ERC721Receiver interface', function() {
-        it('reverts', async function () {
+      context("when the specified token doesn't exist", function() {
+        it('reverts', async function() {
           await assertRevert(
-            token.safeTransferFrom(accounts[1], token.address, secondTokenId, {
+            token.transferFrom(accounts[1], accounts[0], unknownTokenId, {
               from: accounts[1]
             })
           );
         });
       });
+
+      context(
+        "when the specified contract doesn't implement the ERC721Receiver interface",
+        function() {
+          it('reverts', async function() {
+            await assertRevert(
+              token.safeTransferFrom(accounts[1], token.address, secondTokenId, {
+                from: accounts[1]
+              })
+            );
+          });
+        }
+      );
+    };
+
+    const safeTransferFromTransaction = function(from, to, tokenId, opts) {
+      return sendTransaction(
+        token,
+        'safeTransferFrom',
+        'address,address,uint256,bytes',
+        [from, to, tokenId, data],
+        opts
+      );
+    };
+
+    const safeTransferFromBytesToAccount = function() {
+      context('when successfull', function() {
+        _clearApproval();
+        _removeToken();
+
+        it('increases the recepient balance', async function() {
+          assert.equal(bignumberUtils.parseNumber(await token.balanceOf(accounts[0])), 2);
+        });
+
+        it('sets the token owner to recepient', async function() {
+          assert.equal(bignumberUtils.parseString(await token.ownerOf(secondTokenId)), accounts[0]);
+        });
+
+        it("adds token to the list of the recepient's owned tokens", async function() {
+          assert.equal(
+            bignumberUtils.parseJSON(await token.tokensOf(accounts[0])),
+            '["' + firstTokenId.toString() + '","' + secondTokenId.toString() + '"]'
+          );
+        });
+
+        approvalEvent();
+
+        it('emits a Transfer event', async function() {
+          assert.equal(logs.length, 2);
+          assert.equal(logs[1].event, 'Transfer');
+          assert.equal(logs[1].args._from, accounts[1]);
+          assert.equal(logs[1].args._to, accounts[0]);
+          assert.equal(logs[1].args._tokenId, secondTokenId);
+        });
+      });
+
+      context('when zero address specified as token owner', function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(solidity.ZERO_ADDRESS, accounts[0], secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context('when zero address specified as token recepient', function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], solidity.ZERO_ADDRESS, secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context("when msg.sender isn't owner or approval of the specified token", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], accounts[0], secondTokenId, {
+              from: accounts[2]
+            })
+          );
+        });
+      });
+
+      context('when the specified token frozen', function() {
+        it('reverts', async function() {
+          await token.freeze(secondTokenId, { from: creator });
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], accounts[0], secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context("when the specified token doesn't exist", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], accounts[0], unknownTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+    };
+
+    const safeTransferFromBytesToContract = function() {
+      context('when successfull', function() {
+        _clearApproval();
+        _removeToken();
+
+        it('increases the recepient balance', async function() {
+          assert.equal(bignumberUtils.parseNumber(await token.balanceOf(receiver.address)), 1);
+        });
+
+        it('sets the token owner to recepient', async function() {
+          assert.equal(
+            bignumberUtils.parseString(await token.ownerOf(secondTokenId)),
+            receiver.address
+          );
+        });
+
+        it("adds token to the list of the recepient's owned tokens", async function() {
+          assert.equal(
+            bignumberUtils.parseJSON(await token.tokensOf(receiver.address)),
+            '["' + secondTokenId.toString() + '"]'
+          );
+        });
+
+        approvalEvent();
+
+        it('emits a Transfer event', async function() {
+          assert.equal(logs.length, 2);
+          assert.equal(logs[1].event, 'Transfer');
+          assert.equal(logs[1].args._from, accounts[1]);
+          assert.equal(logs[1].args._to, receiver.address);
+          assert.equal(logs[1].args._tokenId, secondTokenId);
+        });
+      });
+
+      context('when zero address specified as token owner', function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(solidity.ZERO_ADDRESS, receiver.address, secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context('when zero address specified as token recepient', function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], solidity.ZERO_ADDRESS, secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context("when msg.sender isn't owner or approval of the specified token", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], receiver.address, secondTokenId, {
+              from: accounts[2]
+            })
+          );
+        });
+      });
+
+      context('when the specified token frozen', function() {
+        it('reverts', async function() {
+          await token.freeze(secondTokenId, { from: creator });
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], receiver.address, secondTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context("when the specified token doesn't exist", function() {
+        it('reverts', async function() {
+          await assertRevert(
+            safeTransferFromTransaction(accounts[1], receiver.address, unknownTokenId, {
+              from: accounts[1]
+            })
+          );
+        });
+      });
+
+      context(
+        "when the specified contract doesn't implement the ERC721Receiver interface",
+        function() {
+          it('reverts', async function() {
+            await assertRevert(
+              safeTransferFromTransaction(accounts[1], receiver.address, secondTokenId, {
+                from: accounts[1]
+              })
+            );
+          });
+        }
+      );
     };
 
     describe('transferFrom', function() {
@@ -809,8 +1003,7 @@ contract('CyberCoin', function(accounts) {
       });
     });
 
-    // TODO: safeTransferFrom without additional data
-    describe('safeTransferFrom without additional data', function() {
+    describe('safeTransferFrom', function() {
       context('transfer the token to the default account', function() {
         context('transfer the token owned by msg.sender', function() {
           beforeEach('transfer a token', async function() {
@@ -867,7 +1060,67 @@ contract('CyberCoin', function(accounts) {
     });
 
     // TODO: safeTransferFrom with additional bytes data
-    describe('safeTransferFrom with additional bytes data', function() {});
+    describe('safeTransferFrom with additional bytes data', function() {
+      context('transfer the token to the default account', function() {
+        context('transfer the token owned by msg.sender', function() {
+          beforeEach('transfer a token', async function() {
+            const result = await safeTransferFromTransaction(
+              accounts[1],
+              accounts[0],
+              secondTokenId,
+              { from: accounts[1] }
+            );
+            logs = result.logs;
+          });
+
+          safeTransferFromBytesToAccount();
+        });
+
+        context('transfer the token approved to msg.sender', function() {
+          beforeEach('transfer a token', async function() {
+            const result = await safeTransferFromTransaction(
+              accounts[1],
+              accounts[0],
+              secondTokenId,
+              { from: accounts[0] }
+            );
+            logs = result.logs;
+          });
+
+          safeTransferFromBytesToAccount();
+        });
+      });
+
+      context('transfer the token to the smart contract', function() {
+        context('transfer the token owned by msg.sender', function() {
+          beforeEach('transfer a token', async function() {
+            const result = await safeTransferFromTransaction(
+              accounts[1],
+              receiver.address,
+              secondTokenId,
+              { from: accounts[1] }
+            );
+            logs = result.logs;
+          });
+
+          safeTransferFromBytesToContract();
+        });
+
+        context('transfer the token approved to msg.sender', function() {
+          beforeEach('transfer a token', async function() {
+            const result = await safeTransferFromTransaction(
+              accounts[1],
+              receiver.address,
+              secondTokenId,
+              { from: accounts[0] }
+            );
+            logs = result.logs;
+          });
+
+          safeTransferFromBytesToContract();
+        });
+      });
+    });
   });
 
   describe('mint', function() {

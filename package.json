@@ -24,8 +24,9 @@
     "babel-polyfill": "^6.26.0",
     "bignumber-to-string": "^0.1.4",
     "bignumberjson": "^1.0.1",
+    "ethjs-abi": "^0.2.1",
     "js-sha3": "^0.8.0",
-    "openzeppelin-solidity": "1.11.0",
-    "web3": "github:ethereum/web3.js"
+    "lodash": "^4.17.10",
+    "openzeppelin-solidity": "^1.12.0"
   }
 }

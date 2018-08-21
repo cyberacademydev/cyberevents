@@ -159,7 +159,7 @@ contract CyberCore is Contactable {
     public 
     onlyOwner
   {
-    // require(_startTime > now);
+    require(_startTime >= now);
     require(_endTime > _startTime);
     require(_ticketsAmount > 0);
     require(_speakers.length > 0);
@@ -238,13 +238,14 @@ contract CyberCore is Contactable {
 
     token.freeze(_tokenId);
 
-    uint cashback = (
-      events[id].ticketPrice.div(100).
-      mul(100 - events[id].speakersPercent - events[id].ownerPercent)
-    );
-
-    _participant.transfer(cashback);
+    if (events[_tokenId].ticketPrice > 0) {
+      uint cashback = (
+        events[id].ticketPrice.div(100).
+        mul(100 - events[id].speakersPercent - events[id].ownerPercent)
+      );
+    }
     
+    _participant.transfer(cashback);
   }
 
   /**
