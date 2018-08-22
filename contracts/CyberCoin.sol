@@ -19,12 +19,8 @@ contract CyberCoin is ERC721, Contactable {
   string internal constant symbol_ = "CYBER";
 
   bytes4 internal constant ERC721_RECEIVED = 0x150b7a02;
-  bytes4 internal constant INTERFACEID_ERC165 = 0x01ffc9a7;
-  bytes4 internal constant INTERFACEID_ERC721 = 0x80ac58cd;
-  bytes4 internal constant INTERFACEID_ERC721_EXISTS = 0x4f558e79;
-  bytes4 internal constant INTERFACEID_ERC721_ENUMERABLE = 0x780e9d63;
-  bytes4 internal constant INTERFACEID_ERC721_METADATA = 0x5b5e139f;
-  bytes4 internal constant INTERFACEID_ERC721_TOKENSOF = 0x5a3f2672;
+  bytes4 internal constant InterfaceId_ERC165 = 0x01ffc9a7;
+  bytes4 internal constant InterfaceId_ERC721TokensOf = 0x5a3f2672;
 
   uint internal totalSupply_;
   uint[] internal allTokens;
@@ -85,15 +81,15 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Constructor that register implemented in this contract interfaces
+   * @dev Constructor that register implemented interfaces
    */
   constructor() public {
-    _registerInterface(INTERFACEID_ERC165);
-    _registerInterface(INTERFACEID_ERC721);
-    _registerInterface(INTERFACEID_ERC721_EXISTS);
-    _registerInterface(INTERFACEID_ERC721_ENUMERABLE);
-    _registerInterface(INTERFACEID_ERC721_METADATA);
-    _registerInterface(INTERFACEID_ERC721_TOKENSOF);
+    _registerInterface(InterfaceId_ERC165);
+    _registerInterface(InterfaceId_ERC721);
+    _registerInterface(InterfaceId_ERC721Exists);
+    _registerInterface(InterfaceId_ERC721Enumerable);
+    _registerInterface(InterfaceId_ERC721Metadata);
+    _registerInterface(InterfaceId_ERC721TokensOf);
   }
 
   /**

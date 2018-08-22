@@ -119,12 +119,10 @@ contract CyberCore is Contactable {
   function getUpcomingEvents() public view returns (uint[] _events) {
     uint j = 0;
     for (uint i = allEvents.length; i > 0; i--) {
-
       if (events[i].startTime > now) {
         _events[j] = i;
         j++;
       }
-
     }
   }
 
@@ -159,7 +157,7 @@ contract CyberCore is Contactable {
     public 
     onlyOwner
   {
-    require(_startTime >= now);
+    require(_startTime > now);
     require(_endTime > _startTime);
     require(_ticketsAmount > 0);
     require(_speakers.length > 0);
