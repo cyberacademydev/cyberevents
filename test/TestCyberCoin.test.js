@@ -1,13 +1,15 @@
-const assertRevert = require('./helpers/AssertRevert');
-const bignumberUtils = require('./helpers/BignumberUtils');
-const sendTransaction = require('./helpers/SendTransaction');
-const solidity = require('./helpers/SolidityUtils');
+const { assertRevert } = require('openzeppelin-solidity/test/helpers/assertRevert');
+const { parseNumber, parseString, parseJSON } = require('./helpers/BignumberUtils');
+const { sendTransaction } = require('openzeppelin-solidity/test/helpers/sendTransaction');
 
 const CyberCoin = artifacts.require('CyberCoin');
 const CyberReceiver = artifacts.require('CyberReceiver');
 
-contract('CyberCoin', function(accounts) {
-  web3.eth.defaultAccount = accounts[0];
+web3.eth.defaultAccount = web3.eth.accounts[0];
+
+contract('CyberCoin', function (accounts) {
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+  const MINT_DATA = '0x9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658';
   const creator = accounts[0];
 
   let token;
@@ -27,7 +29,7 @@ contract('CyberCoin', function(accounts) {
     const InterfaceId_ERC721TokensOf = '0x5a3f2672';
 
     it('initial tokens amount', async function() {
-      assert.equal(bignumberUtils.parseNumber(await this.token.totalSupply()), 0);
+      assert.equal(parseNumber(await this.token.totalSupply()), 0);
     });
 
     it('registered the ERC165 interface', async function() {
@@ -58,24 +60,24 @@ contract('CyberCoin', function(accounts) {
   describe('balanceOf', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when the specified address owns some tokens', function() {
       it('returns its owned tokens amount', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(accounts[0])), 1);
+        assert.equal(parseNumber(await this.token.balanceOf(accounts[0])), 1);
       });
     });
 
     context("when the specified address doesn't own any tokens", function() {
       it('returns 0', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(accounts[1])), 0);
+        assert.equal(parseNumber(await this.token.balanceOf(accounts[1])), 0);
       });
     });
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.balanceOf(solidity.ZERO_ADDRESS));
+        await assertRevert(this.token.balanceOf(ZERO_ADDRESS));
       });
     });
   });
@@ -83,12 +85,12 @@ contract('CyberCoin', function(accounts) {
   describe('ownerOf', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when successfull', function() {
       it('returns the specified token owners address', async function() {
-        assert.equal(bignumberUtils.parseString(await this.token.ownerOf(1)), accounts[0]);
+        assert.equal(parseString(await this.token.ownerOf(1)), accounts[0]);
       });
     });
 
@@ -102,24 +104,24 @@ contract('CyberCoin', function(accounts) {
   describe('tokensOf', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when the specified address owns some tokens', function() {
       it('returns its owned tokens list', async function() {
-        assert.equal(bignumberUtils.parseJSON(await this.token.tokensOf(accounts[0])), '["1"]');
+        assert.equal(parseJSON(await this.token.tokensOf(accounts[0])), '["1"]');
       });
     });
 
     context("when the specified address doesn't own any tokens", function() {
       it('returns empty JSON', async function() {
-        assert.equal(bignumberUtils.parseJSON(await this.token.tokensOf(accounts[1])), '[]');
+        assert.equal(parseJSON(await this.token.tokensOf(accounts[1])), '[]');
       });
     });
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.tokensOf(solidity.ZERO_ADDRESS));
+        await assertRevert(this.token.tokensOf(ZERO_ADDRESS));
       });
     });
   });
@@ -127,13 +129,13 @@ contract('CyberCoin', function(accounts) {
   describe('tokenOfOwnerByIndex', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when successfull', function() {
       it('returns token, that is on the given position in the ownedTokens list of the specified address', async function() {
         assert.equal(
-          bignumberUtils.parseNumber(await this.token.tokenOfOwnerByIndex(accounts[0], 0)),
+          parseNumber(await this.token.tokenOfOwnerByIndex(accounts[0], 0)),
           1
         );
       });
@@ -141,7 +143,7 @@ contract('CyberCoin', function(accounts) {
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.tokenOfOwnerByIndex(solidity.ZERO_ADDRESS, 0));
+        await assertRevert(this.token.tokenOfOwnerByIndex(ZERO_ADDRESS, 0));
       });
     });
 
@@ -155,12 +157,12 @@ contract('CyberCoin', function(accounts) {
   describe('tokenByIndex', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when successfull', function() {
       it('returns token, that is on the given position in the allTokens array', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.tokenByIndex(0)), 1);
+        assert.equal(parseNumber(await this.token.tokenByIndex(0)), 1);
       });
     });
 
@@ -174,22 +176,22 @@ contract('CyberCoin', function(accounts) {
   describe('getApproved', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
-      await this.token.mint(accounts[1], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
+      await this.token.mint(accounts[1], 1, MINT_DATA, { from: creator });
       await this.token.approve(accounts[1], 1, { from: accounts[0] });
     });
 
     context('when the specified token approval exists', function() {
       it('returns the given token approved address', async function() {
-        assert.equal(bignumberUtils.parseString(await this.token.getApproved(1)), accounts[1]);
+        assert.equal(parseString(await this.token.getApproved(1)), accounts[1]);
       });
     });
 
     context('when the specified token approval equals to zero', function() {
       it('returns zero address ', async function() {
         assert.equal(
-          bignumberUtils.parseString(await this.token.getApproved(2)),
-          solidity.ZERO_ADDRESS
+          parseString(await this.token.getApproved(2)),
+          ZERO_ADDRESS
         );
       });
     });
@@ -204,7 +206,7 @@ contract('CyberCoin', function(accounts) {
   describe('isApprovedForAll', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
       await this.token.setApprovalForAll(accounts[1], true, { from: accounts[0] });
     });
 
@@ -222,13 +224,13 @@ contract('CyberCoin', function(accounts) {
 
     context('when zero address specified as a tokens owner', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.isApprovedForAll(solidity.ZERO_ADDRESS, accounts[1]));
+        await assertRevert(this.token.isApprovedForAll(ZERO_ADDRESS, accounts[1]));
       });
     });
 
     context('when zero address specified as an approved address', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.isApprovedForAll(accounts[0], solidity.ZERO_ADDRESS));
+        await assertRevert(this.token.isApprovedForAll(accounts[0], ZERO_ADDRESS));
       });
     });
   });
@@ -236,7 +238,7 @@ contract('CyberCoin', function(accounts) {
   describe('isApprovedOrOwner', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when the given address is the token owner', function() {
@@ -260,7 +262,7 @@ contract('CyberCoin', function(accounts) {
 
     context('when the specified address is zero address', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.isApprovedOrOwner(solidity.ZERO_ADDRESS, 1));
+        await assertRevert(this.token.isApprovedOrOwner(ZERO_ADDRESS, 1));
       });
     });
 
@@ -274,7 +276,7 @@ contract('CyberCoin', function(accounts) {
   describe('exists', function() {
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when the specified token exists', function() {
@@ -293,8 +295,8 @@ contract('CyberCoin', function(accounts) {
   describe('tokenFrozen', function() {
     beforeEach('mint and freeze tokens', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
       await this.token.freeze(1, { from: creator });
     });
 
@@ -320,12 +322,12 @@ contract('CyberCoin', function(accounts) {
   describe('eventId', function() {
     beforeEach('mint and freeze tokens', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when successfull', function() {
       it('returns the specified token event ID', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.eventId(1)), 1);
+        assert.equal(parseNumber(await this.token.eventId(1)), 1);
       });
     });
 
@@ -342,12 +344,12 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint a token', async function() {
       await this.token.setMinter(creator, {from: creator});
-      await this.token.mint(accounts[0], 1, {from: creator});
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
     });
 
     context('when successfull', function() {
       it('returns the specified token URI', async function() {
-        assert.equal(bignumberUtils.parseString(await this.token.tokenURI(tokenId)), '');
+        assert.equal(parseString(await this.token.tokenURI(tokenId)), '');
       });
     });
 
@@ -391,14 +393,14 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint and approve tokens', async function() {
       await this.token.setMinter(owner, { from: creator });
-      await this.token.mint(owner, eventId, { from: creator });
+      await this.token.mint(owner, eventId, MINT_DATA, { from: creator });
       let result = await this.token.approve(spender, tokenId, { from: owner });
       logs = result.logs;
     });
 
     context('when successful', function() {
       it('sets the token approval to the given address', async function() {
-        assert.equal(bignumberUtils.parseString(await this.token.getApproved(tokenId)), spender);
+        assert.equal(parseString(await this.token.getApproved(tokenId)), spender);
       });
 
       it('emits an Approval event', async function() {
@@ -406,13 +408,13 @@ contract('CyberCoin', function(accounts) {
         assert.equal(logs[0].event, 'Approval');
         assert.equal(logs[0].args._owner, owner);
         assert.equal(logs[0].args._approved, spender);
-        assert.equal(bignumberUtils.parseNumber(logs[0].args._tokenId), tokenId);
+        assert.equal(parseNumber(logs[0].args._tokenId), tokenId);
       });
     });
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.approve(solidity.ZERO_ADDRESS, tokenId, { from: owner }));
+        await assertRevert(this.token.approve(ZERO_ADDRESS, tokenId, { from: owner }));
       });
     });
 
@@ -463,7 +465,7 @@ contract('CyberCoin', function(accounts) {
 
     context('when zero address specified as tokens spender', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.setApprovalForAll(solidity.ZERO_ADDRESS, true, {from: owner}));
+        await assertRevert(this.token.setApprovalForAll(ZERO_ADDRESS, true, {from: owner}));
       });
     });
   });
@@ -479,7 +481,7 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint and approve tokens', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(owner, eventId, { from: creator });
+      await this.token.mint(owner, eventId, MINT_DATA, { from: creator });
       await this.token.approve(spender, tokenId, { from: owner });
       const result = await this.token.clearApproval(tokenId, { from: owner });
       logs = result.logs;
@@ -488,8 +490,8 @@ contract('CyberCoin', function(accounts) {
     context('when successful', function() {
       it('sets the token approval to the zero address', async function() {
         assert.equal(
-          bignumberUtils.parseString(await this.token.getApproved(tokenId)),
-          solidity.ZERO_ADDRESS
+          parseString(await this.token.getApproved(tokenId)),
+          ZERO_ADDRESS
         );
       });
 
@@ -497,8 +499,8 @@ contract('CyberCoin', function(accounts) {
         assert.equal(logs.length, 1);
         assert.equal(logs[0].event, 'Approval');
         assert.equal(logs[0].args._owner, owner);
-        assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
-        assert.equal(bignumberUtils.parseNumber(logs[0].args._tokenId), tokenId);
+        assert.equal(logs[0].args._approved, ZERO_ADDRESS);
+        assert.equal(parseNumber(logs[0].args._tokenId), tokenId);
       });
     });
 
@@ -534,29 +536,29 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint and approve tokens', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], eventId, { from: creator });
-      await this.token.mint(accounts[1], eventId, { from: creator });
-      await this.token.mint(accounts[1], eventId, { from: creator });
+      await this.token.mint(accounts[0], eventId, MINT_DATA, { from: creator });
+      await this.token.mint(accounts[1], eventId, MINT_DATA, { from: creator });
+      await this.token.mint(accounts[1], eventId, MINT_DATA, { from: creator });
       await this.token.approve(accounts[0], secondTokenId, { from: accounts[1] });
     });
 
     const _clearApproval = function() {
       it('sets the token approval to zero address', async function() {
         assert.equal(
-          bignumberUtils.parseString(await this.token.getApproved(secondTokenId)),
-          solidity.ZERO_ADDRESS
+          parseString(await this.token.getApproved(secondTokenId)),
+          ZERO_ADDRESS
         );
       });
     };
 
     const _removeToken = function() {
       it('decreases the sender balance', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(accounts[1])), 1);
+        assert.equal(parseNumber(await this.token.balanceOf(accounts[1])), 1);
       });
 
       it('moves the last token to the sent token position in the ownedTokens list', async function() {
         assert.equal(
-          bignumberUtils.parseJSON(await this.token.tokensOf(accounts[1])),
+          parseJSON(await this.token.tokensOf(accounts[1])),
           '["' + thirdTokenId.toString() + '"]'
         );
       });
@@ -567,7 +569,7 @@ contract('CyberCoin', function(accounts) {
         assert.equal(logs.length, 2);
         assert.equal(logs[0].event, 'Approval');
         assert.equal(logs[0].args._owner, accounts[1]);
-        assert.equal(logs[0].args._approved, solidity.ZERO_ADDRESS);
+        assert.equal(logs[0].args._approved, ZERO_ADDRESS);
         assert.equal(logs[0].args._tokenId, secondTokenId);
       });
     };
@@ -578,19 +580,19 @@ contract('CyberCoin', function(accounts) {
         _removeToken();
 
         it('increases the recepient balance', async function() {
-          assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(accounts[0])), 2);
+          assert.equal(parseNumber(await this.token.balanceOf(accounts[0])), 2);
         });
 
         it('sets the token owner to recepient', async function() {
           assert.equal(
-            bignumberUtils.parseString(await this.token.ownerOf(secondTokenId)),
+            parseString(await this.token.ownerOf(secondTokenId)),
             accounts[0]
           );
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
           assert.equal(
-            bignumberUtils.parseJSON(await this.token.tokensOf(accounts[0])),
+            parseJSON(await this.token.tokensOf(accounts[0])),
             '["' + firstTokenId.toString() + '","' + secondTokenId.toString() + '"]'
           );
         });
@@ -609,7 +611,7 @@ contract('CyberCoin', function(accounts) {
       context('when zero address specified as token owner', function() {
         it('reverts', async function() {
           await assertRevert(
-            this.token.transferFrom(solidity.ZERO_ADDRESS, accounts[0], secondTokenId, {
+            this.token.transferFrom(ZERO_ADDRESS, accounts[0], secondTokenId, {
               from: accounts[1]
             })
           );
@@ -619,7 +621,7 @@ contract('CyberCoin', function(accounts) {
       context('when zero address specified as token recepient', function() {
         it('reverts', async function() {
           await assertRevert(
-            this.token.transferFrom(accounts[1], solidity.ZERO_ADDRESS, secondTokenId, {
+            this.token.transferFrom(accounts[1], ZERO_ADDRESS, secondTokenId, {
               from: accounts[1]
             })
           );
@@ -664,19 +666,19 @@ contract('CyberCoin', function(accounts) {
         _removeToken();
 
         it('increases the recepient balance', async function() {
-          assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(accounts[0])), 2);
+          assert.equal(parseNumber(await this.token.balanceOf(accounts[0])), 2);
         });
 
         it('sets the token owner to recepient', async function() {
           assert.equal(
-            bignumberUtils.parseString(await this.token.ownerOf(secondTokenId)),
+            parseString(await this.token.ownerOf(secondTokenId)),
             accounts[0]
           );
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
           assert.equal(
-            bignumberUtils.parseJSON(await this.token.tokensOf(accounts[0])),
+            parseJSON(await this.token.tokensOf(accounts[0])),
             '["' + firstTokenId.toString() + '","' + secondTokenId.toString() + '"]'
           );
         });
@@ -695,7 +697,7 @@ contract('CyberCoin', function(accounts) {
       context('when zero address specified as token owner', function() {
         it('reverts', async function() {
           await assertRevert(
-            this.token.safeTransferFrom(solidity.ZERO_ADDRESS, accounts[0], secondTokenId, {
+            this.token.safeTransferFrom(ZERO_ADDRESS, accounts[0], secondTokenId, {
               from: accounts[1]
             })
           );
@@ -705,7 +707,7 @@ contract('CyberCoin', function(accounts) {
       context('when zero address specified as token recepient', function() {
         it('reverts', async function() {
           await assertRevert(
-            this.token.safeTransferFrom(accounts[1], solidity.ZERO_ADDRESS, secondTokenId, {
+            this.token.safeTransferFrom(accounts[1], ZERO_ADDRESS, secondTokenId, {
               from: accounts[1]
             })
           );
@@ -751,21 +753,21 @@ contract('CyberCoin', function(accounts) {
 
         it('increases the recepient balance', async function() {
           assert.equal(
-            bignumberUtils.parseNumber(await this.token.balanceOf(this.receiver.address)),
+            parseNumber(await this.token.balanceOf(this.receiver.address)),
             1
           );
         });
 
         it('sets the token owner to recepient', async function() {
           assert.equal(
-            bignumberUtils.parseString(await this.token.ownerOf(secondTokenId)),
+            parseString(await this.token.ownerOf(secondTokenId)),
             this.receiver.address
           );
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
           assert.equal(
-            bignumberUtils.parseJSON(await this.token.tokensOf(this.receiver.address)),
+            parseJSON(await this.token.tokensOf(this.receiver.address)),
             '["' + secondTokenId.toString() + '"]'
           );
         });
@@ -785,7 +787,7 @@ contract('CyberCoin', function(accounts) {
         it('reverts', async function() {
           await assertRevert(
             this.token.safeTransferFrom(
-              solidity.ZERO_ADDRESS,
+              ZERO_ADDRESS,
               this.receiver.address,
               secondTokenId,
               {
@@ -799,7 +801,7 @@ contract('CyberCoin', function(accounts) {
       context('when zero address specified as token recepient', function() {
         it('reverts', async function() {
           await assertRevert(
-            this.token.safeTransferFrom(accounts[1], solidity.ZERO_ADDRESS, secondTokenId, {
+            this.token.safeTransferFrom(accounts[1], ZERO_ADDRESS, secondTokenId, {
               from: accounts[1]
             })
           );
@@ -857,19 +859,19 @@ contract('CyberCoin', function(accounts) {
         _removeToken();
 
         it('increases the recepient balance', async function() {
-          assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(accounts[0])), 2);
+          assert.equal(parseNumber(await this.token.balanceOf(accounts[0])), 2);
         });
 
         it('sets the token owner to recepient', async function() {
           assert.equal(
-            bignumberUtils.parseString(await this.token.ownerOf(secondTokenId)),
+            parseString(await this.token.ownerOf(secondTokenId)),
             accounts[0]
           );
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
           assert.equal(
-            bignumberUtils.parseJSON(await this.token.tokensOf(accounts[0])),
+            parseJSON(await this.token.tokensOf(accounts[0])),
             '["' + firstTokenId.toString() + '","' + secondTokenId.toString() + '"]'
           );
         });
@@ -892,7 +894,7 @@ contract('CyberCoin', function(accounts) {
               this.token,
               'safeTransferFrom',
               'address,address,uint256,bytes',
-              [solidity.ZERO_ADDRESS, accounts[0], secondTokenId, data],
+              [ZERO_ADDRESS, accounts[0], secondTokenId, data],
               {from: accounts[1]}
             )
           );
@@ -906,7 +908,7 @@ contract('CyberCoin', function(accounts) {
               this.token,
               'safeTransferFrom',
               'address,address,uint256,bytes',
-              [accounts[1], solidity.ZERO_ADDRESS, secondTokenId, data],
+              [accounts[1], ZERO_ADDRESS, secondTokenId, data],
               {from: accounts[1]}
             )
           );
@@ -964,21 +966,21 @@ contract('CyberCoin', function(accounts) {
 
         it('increases the recepient balance', async function() {
           assert.equal(
-            bignumberUtils.parseNumber(await this.token.balanceOf(this.receiver.address)),
+            parseNumber(await this.token.balanceOf(this.receiver.address)),
             1
           );
         });
 
         it('sets the token owner to recepient', async function() {
           assert.equal(
-            bignumberUtils.parseString(await this.token.ownerOf(secondTokenId)),
+            parseString(await this.token.ownerOf(secondTokenId)),
             this.receiver.address
           );
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
           assert.equal(
-            bignumberUtils.parseJSON(await this.token.tokensOf(this.receiver.address)),
+            parseJSON(await this.token.tokensOf(this.receiver.address)),
             '["' + secondTokenId.toString() + '"]'
           );
         });
@@ -1001,7 +1003,7 @@ contract('CyberCoin', function(accounts) {
               this.token,
               'safeTransferFrom',
               'address,address,uint256,bytes',
-              [solidity.ZERO_ADDRESS, this.receiver.address, secondTokenId, data],
+              [ZERO_ADDRESS, this.receiver.address, secondTokenId, data],
               {from: accounts[1]}
             )
           );
@@ -1015,7 +1017,7 @@ contract('CyberCoin', function(accounts) {
               this.token,
               'safeTransferFrom',
               'address,address,uint256,bytes',
-              [accounts[1], solidity.ZERO_ADDRESS, secondTokenId, data],
+              [accounts[1], ZERO_ADDRESS, secondTokenId, data],
               {from: accounts[1]}
             )
           );
@@ -1246,7 +1248,7 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint and freeze a token', async function() {
       await this.token.setMinter(creator, { from: creator });
-      await this.token.mint(accounts[0], 1, { from: creator });
+      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
       await this.token.freeze(tokenId, { from: creator });
     });
 
@@ -1284,29 +1286,37 @@ contract('CyberCoin', function(accounts) {
 
     beforeEach('mint a token', async function() {
       await this.token.setMinter(minter, { from: creator });
-      let result = await this.token.mint(to, eventId, { from: minter });
+      let result = await this.token.mint(to, eventId, MINT_DATA, { from: minter });
       logs = result.logs;
     });
 
     context('when successful', function() {
       it('increases the total tokens amount', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.totalSupply()), 1);
+        assert.equal(parseNumber(await this.token.totalSupply()), 1);
       });
 
       it('assigns the token to the new owner', async function() {
-        assert.equal(bignumberUtils.parseString(await this.token.ownerOf(tokenId)), to);
+        assert.equal(parseString(await this.token.ownerOf(tokenId)), to);
       });
 
       it('increases the balance of its owner', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.balanceOf(to)), 1);
+        assert.equal(parseNumber(await this.token.balanceOf(to)), 1);
       });
 
       it('assigns the token to the given event ID', async function() {
-        assert.equal(bignumberUtils.parseNumber(await this.token.eventId(tokenId)), eventId);
+        assert.equal(parseNumber(await this.token.eventId(tokenId)), eventId);
+      });
+
+      it('sets the token data to the specified value', async function() {
+        assert.equal(parseString(await this.token.getTokenData(tokenId)), MINT_DATA);
       });
 
       it('adds the token to the list of the owned tokens', async function() {
-        assert.equal(bignumberUtils.parseJSON(await this.token.tokensOf(to)), '["1"]');
+        assert.equal(parseJSON(await this.token.tokensOf(to)), '["1"]');
+      });
+
+      it('adds the token to the allTokens array', async function() {
+        assert.equal(parseNumber(await this.token.tokenByIndex(0)), 1);
       });
 
       it('emits a Mint event', async function() {
@@ -1319,13 +1329,15 @@ contract('CyberCoin', function(accounts) {
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.mint(solidity.ZERO_ADDRESS, eventId, { from: minter }));
+        await assertRevert(this.token.mint(ZERO_ADDRESS, eventId, MINT_DATA, {
+            from: minter
+          }));
       });
     });
 
     context("when the msg.sender isn't minter", function() {
       it('reverts', async function() {
-        await assertRevert(this.token.mint(to, eventId, { from: to }));
+        await assertRevert(this.token.mint(to, eventId, MINT_DATA, { from: to }));
       });
     });
   });
@@ -1339,13 +1351,13 @@ contract('CyberCoin', function(accounts) {
 
     context('when succesful', function() {
       it('sets the minter to the given address', async function() {
-        assert.equal(bignumberUtils.parseString(await this.token.minter()), minter);
+        assert.equal(parseString(await this.token.minter()), minter);
       });
     });
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.setMinter(solidity.ZERO_ADDRESS, { from: creator }));
+        await assertRevert(this.token.setMinter(ZERO_ADDRESS, { from: creator }));
       });
     });
   });
