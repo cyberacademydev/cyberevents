@@ -1,19 +1,7 @@
-
-const parseNumber = (bignumber) => {
-  return bignumber.toNumber();
-}
-
-const parseString = (bignumber) => {
-  return bignumber.toString();
-}
-
-const parseJSON = (bignumber) => {
-  return JSON.stringify(bignumber);
-}
-
-const parseObject = (bignumber) => {
-  return JSON.parse(parseJSON(bignumber));
-}
+const parseNumber = val => val.toNumber();
+const parseString = val => val.toString(10);
+const parseJSON = val => JSON.stringify(val);
+const parseObject = val => JSON.parse(parseJSON(val));
 
 module.exports = {
   parseNumber,
