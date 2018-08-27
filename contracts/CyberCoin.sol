@@ -9,7 +9,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title Cyber Academy DApp ERC721 modified token
- * @author Nick - [Facebook](https://facebook.com/k.kornilov01), [GitHub](https://github.com/rjkz808)
+ * @author [Kolya Kornilov](https://facebook.com/k.kornilov01)
  */
 contract CyberCoin is ERC721, Contactable {
   using AddressUtils for address;
@@ -35,6 +35,7 @@ contract CyberCoin is ERC721, Contactable {
   mapping (uint => uint) internal allTokensIndex;
   mapping (uint => bool) internal freezedTokens;
   mapping (uint => uint) internal tokenEventId;
+  mapping (uint => bytes32) internal tokenData;
   mapping (uint => string) internal tokenURIs;
   mapping (bytes4 => bool) internal supportedInterfaces;
 
@@ -81,7 +82,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Constructor that register implemented interfaces
+   * @dev Constructor that registers implemented interfaces
    */
   constructor() public {
     _registerInterface(InterfaceId_ERC165);
@@ -244,11 +245,21 @@ contract CyberCoin is ERC721, Contactable {
   /**
    * @dev Gets the given token event ID
    * @param _tokenId uint ID of the specified token
-   * @return uint `_tokenId`'s event ID
+   * @return uint `_tokenId` event ID
    */
   function eventId(uint _tokenId) public view returns (uint) {
     require(exists(_tokenId));
     return tokenEventId[_tokenId];
+  }
+
+  /**
+   * @dev Gets the given token data
+   * @param _tokenId uint ID of the specified token
+   * @return bytes32 `_tokenId` data
+   */
+  function getTokenData(uint _tokenId) public view returns (bytes32) {
+    require(exists(_tokenId));
+    return tokenData[_tokenId];
   }
 
   /**
@@ -395,10 +406,11 @@ contract CyberCoin is ERC721, Contactable {
   /**
    * @dev Function to create a token and send it to the specified account
    * @param _to address the token recepient
-   * @param _eventId uint ID of the event for wich the token will be created
+   * @param _eventId uint ID of the event for wich the token will be minted
+   * @param _data bytes32 value will be used in the `checkIn` function
    * @return bool the transaction success state
    */
-  function mint(address _to, uint _eventId)
+  function mint(address _to, uint _eventId, bytes32 _data)
     public
     onlyMinter
     returns (bool)
@@ -411,6 +423,7 @@ contract CyberCoin is ERC721, Contactable {
     allTokensIndex[tokenId] = allTokens.length;
     allTokens.push(tokenId);
     tokenEventId[tokenId] = _eventId;
+    tokenData[tokenId] = _data;
     _addTokenTo(_to, tokenId);
 
     emit Mint(_to, tokenId);
@@ -459,7 +472,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal function to add token to account
+   * @dev Internal function to add token to an account
    * @param _to address the token recepient
    * @param _tokenId uint sending tokens ID
    */
@@ -510,7 +523,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal function to register support of an interface
+   * @dev Internal function to register the support of an interface
    * @param _interfaceId bytes4 ID of the interface to be registered
    */
   function _registerInterface(bytes4 _interfaceId) internal {
