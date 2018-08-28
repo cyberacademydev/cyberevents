@@ -358,7 +358,10 @@ contract('CyberCore', function(accounts) {
         [accounts[0]],
         { from: creator }
       );
-      const result = await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[1], value: 721 });
+      const result = await this.core.signUp(eventId, TOKEN_DATA_HASH, {
+        from: accounts[1],
+        value: 721
+      });
 
       logs = result.logs;
     });
@@ -438,7 +441,9 @@ contract('CyberCore', function(accounts) {
     context('when the tickets are already over', function() {
       it('reverts', async function() {
         await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 721 });
-        await assertRevert(this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[3], value: 721 }));
+        await assertRevert(
+          this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[3], value: 721 })
+        );
       });
     });
 
@@ -455,7 +460,9 @@ contract('CyberCore', function(accounts) {
 
     context('when the msg.sender is the contract owner', function() {
       it('reverts', async function() {
-        await assertRevert(this.core.signUp(eventId, TOKEN_DATA_HASH, { from: creator, value: 721 }));
+        await assertRevert(
+          this.core.signUp(eventId, TOKEN_DATA_HASH, { from: creator, value: 721 })
+        );
       });
     });
 
@@ -519,7 +526,7 @@ contract('CyberCore', function(accounts) {
       });
     });
 
-    context("when the specified string data incorrect", function() {
+    context('when the specified string data incorrect', function() {
       it('reverts', async function() {
         await assertRevert(this.core.checkIn(tokenId, 'random', { from: creator }));
       });

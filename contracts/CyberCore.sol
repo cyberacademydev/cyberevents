@@ -55,7 +55,7 @@ contract CyberCore is Contactable {
    * @dev Calls the `signUp` function with the last event ID and keccak256 of 
    * @dev the msg.data in the parameters
    */
-  function() payable {
+  function() public payable {
     require(signUp(lastEvent, keccak256(msg.data)));
   }
 
@@ -124,22 +124,6 @@ contract CyberCore is Contactable {
       events[_eventId].speakers,
       events[_eventId].canceled
     );
-  }
-
-  /**
-   * @dev Gets the list of the upcoming events IDs
-   * @return _events uint[] the upcoming events list
-   */
-  function getUpcomingEvents() public view returns (uint[] _events) {
-    uint j = 0;
-    for (uint i = lastEvent; i > 0; i--) {
-      if (events[i].endTime > now) {
-        _events[j] = i;
-        j++;
-      } else {
-        return _events;
-      }
-    }
   }
 
   /**
@@ -212,7 +196,7 @@ contract CyberCore is Contactable {
     require(!token.tokenFrozen(_tokenId));
     require(events[token.eventId(_tokenId)].endTime > now);
     require(!events[token.eventId(_tokenId)].canceled);
-    require(keccak256(_data) == token.getTokenData(_tokenId));
+    require(keccak256(abi.encodePacked(_data)) == token.getTokenData(_tokenId));
 
     token.freeze(_tokenId);
 
@@ -273,6 +257,7 @@ contract CyberCore is Contactable {
       canceled        : false
     });
     events[lastEvent] = event_;
+    allEvents.push(lastEvent);
 
     emit EventCreated(lastEvent);
   }
