@@ -37,7 +37,7 @@ $ truffle test --network-<testrpc> // <testrpc> : testrpc you're running (eg --n
 To run the specified test
 
 ```
-truffle test <test> --network-ganache // <test> : path to the test file you're going to run (eg ./test/TestCyberCoin.test.js)
+$ truffle test <test> --network-ganache // <test> : path to the test file you're going to run (eg ./test/TestCyberCoin.test.js)
 ```
 
 
