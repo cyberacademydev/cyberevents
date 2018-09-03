@@ -22,7 +22,7 @@ $ git clone https://github.com/cyberevents/cyber-academy-dapp
 
 > _Make sure, that you run all next commands in the repository root_
 
-Install project's node dependencies
+Install project node dependencies
 
 ```
 $ npm install
