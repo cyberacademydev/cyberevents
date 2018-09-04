@@ -2,10 +2,9 @@ const { assertRevert } = require('openzeppelin-solidity/test/helpers/assertRever
 const { parseNumber, parseString, parseJSON, parseObject } = require('./helpers/BignumberUtils');
 const { increaseTime, duration } = require('openzeppelin-solidity/test/helpers/increaseTime');
 const { latestTime } = require('openzeppelin-solidity/test/helpers/latestTime');
-const { soliditySha3 } = require('web3-utils');
+const { sendTransaction } = require('openzeppelin-solidity/test/helpers/sendTransaction');
 
 const CyberCore = artifacts.require('CyberCore');
-const CyberCoin = artifacts.require('CyberCoin');
 
 web3.eth.defaultAccount = web3.eth.accounts[0];
 
@@ -15,18 +14,10 @@ contract('CyberCore', function(accounts) {
   const TOKEN_DATA_HASH = '0x9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658';
   const creator = accounts[0];
 
-  let token;
   let core;
 
   beforeEach('deploy new contracts for each test', async function() {
-    this.token = await CyberCoin.new({ from: creator });
-    this.core = await CyberCore.new(this.token.address, { from: creator });
-  });
-
-  describe('initial', function() {
-    it('set the CyberCoin contract address', async function() {
-      assert.equal(parseString(await this.core.token()), this.token.address);
-    });
+    this.core = await CyberCore.new({ from: creator });
   });
 
   describe('getEvent', function() {
@@ -121,7 +112,7 @@ contract('CyberCore', function(accounts) {
   // TODO: getUpcomingEvents
   describe('getUpcomingEvents', function() {});
 
-  describe('exists', function() {
+  describe('eventExists', function() {
     const eventId = 1;
     const unknownEventId = 2;
 
@@ -140,13 +131,13 @@ contract('CyberCore', function(accounts) {
 
     context('when the specified event exists', function() {
       it('returns true', async function() {
-        assert.equal(await this.core.exists(eventId), true);
+        assert.equal(await this.core.eventExists(eventId), true);
       });
     });
 
     context("when the specified event doesn't exist", function() {
       it('returns false', async function() {
-        assert.equal(await this.core.exists(unknownEventId), false);
+        assert.equal(await this.core.eventExists(unknownEventId), false);
       });
     });
   });
@@ -157,8 +148,6 @@ contract('CyberCore', function(accounts) {
     const unknownEventId = 3;
 
     beforeEach('create an event and sign up to it', async function() {
-      await this.token.setMinter(this.core.address, { from: creator });
-
       await this.core.createEvent(
         (await latestTime()) + duration.hours(1),
         (await latestTime()) + duration.hours(2),
@@ -347,7 +336,6 @@ contract('CyberCore', function(accounts) {
     let logs;
 
     beforeEach('sign up', async function() {
-      await this.token.setMinter(this.core.address, { from: creator });
       await this.core.createEvent(
         (await latestTime()) + duration.hours(1),
         (await latestTime()) + duration.hours(2),
@@ -368,19 +356,19 @@ contract('CyberCore', function(accounts) {
 
     context('when successfull', function() {
       it('mints a token', async function() {
-        assert.equal(parseNumber(await this.token.totalSupply()), 1);
-        assert.equal(parseString(await this.token.ownerOf(tokenId)), accounts[1]);
-        assert.equal(parseNumber(await this.token.balanceOf(accounts[1])), 1);
-        assert.equal(parseNumber(await this.token.tokenByIndex(0)), 1);
-        assert.equal(parseJSON(await this.token.tokensOf(accounts[1])), '["1"]');
+        assert.equal(parseNumber(await this.core.totalSupply()), 1);
+        assert.equal(parseString(await this.core.ownerOf(tokenId)), accounts[1]);
+        assert.equal(parseNumber(await this.core.balanceOf(accounts[1])), 1);
+        assert.equal(parseNumber(await this.core.tokenByIndex(0)), 1);
+        assert.equal(parseJSON(await this.core.tokensOf(accounts[1])), '["1"]');
       });
 
       it('sets the minted token eventId to the specified event ID', async function() {
-        assert.equal(parseNumber(await this.token.eventId(tokenId)), eventId);
+        assert.equal(parseNumber(await this.core.eventId(tokenId)), eventId);
       });
 
       it('sets the token data to the specified value', async function() {
-        assert.equal(parseString(await this.token.getTokenData(tokenId)), TOKEN_DATA_HASH);
+        assert.equal(parseString(await this.core.getTokenData(tokenId)), TOKEN_DATA_HASH);
       });
 
       it('receives the ETH', async function() {
@@ -406,11 +394,18 @@ contract('CyberCore', function(accounts) {
         assert.equal(await this.core.participated(accounts[1], eventId), true);
       });
 
+      it('emits a Mint event', async function() {
+        assert.equal(logs.length, 2);
+        assert.equal(logs[0].event, 'Mint');
+        assert.equal(logs[0].args.to, accounts[1]);
+        assert.equal(parseNumber(logs[0].args.tokenId), tokenId);
+      });
+
       it('emits a SignUp event', async function() {
-        assert.equal(logs.length, 1);
-        assert.equal(logs[0].event, 'SignUp');
-        assert.equal(logs[0].args.participant, accounts[1]);
-        assert.equal(logs[0].args.eventId, eventId);
+        assert.equal(logs.length, 2);
+        assert.equal(logs[1].event, 'SignUp');
+        assert.equal(logs[1].args.participant, accounts[1]);
+        assert.equal(logs[1].args.eventId, eventId);
       });
     });
 
@@ -497,7 +492,6 @@ contract('CyberCore', function(accounts) {
     let logs;
 
     beforeEach('check in', async function() {
-      await this.token.setMinter(this.core.address, { from: creator });
       await this.core.createEvent(
         (await latestTime()) + duration.hours(1),
         (await latestTime()) + duration.hours(2),
@@ -514,15 +508,33 @@ contract('CyberCore', function(accounts) {
     });
 
     context('when succesfull', function() {
+      it('clears approoval of the specified token', async function() {
+        assert.equal(parseString(await this.core.getApproved(tokenId)), ZERO_ADDRESS);
+      });
+
       it('freezes the specified token', async function() {
-        assert.equal(await this.token.tokenFrozen(tokenId), true);
+        assert.equal(await this.core.tokenFrozen(tokenId), true);
+      });
+
+      it('emits an Approval event with zero address specified as spender', async function() {
+        assert.equal(logs.length, 3);
+        assert.equal(logs[0].event, 'Approval');
+        assert.equal(logs[0].args._owner, accounts[1]);
+        assert.equal(logs[0].args._approved, ZERO_ADDRESS);
+        assert.equal(parseNumber(logs[0].args._tokenId), tokenId);
+      });
+
+      it('emit a TokenFreeze event', async function() {
+        assert.equal(logs.length, 3);
+        assert.equal(logs[1].event, 'TokenFreeze');
+        assert.equal(parseNumber(logs[1].args.tokenId), tokenId);
       });
 
       it('emits a CheckIn event', async function() {
-        assert.equal(logs.length, 1);
-        assert.equal(logs[0].event, 'CheckIn');
-        assert.equal(logs[0].args.participant, accounts[1]);
-        assert.equal(parseNumber(logs[0].args.eventId), eventId);
+        assert.equal(logs.length, 3);
+        assert.equal(logs[2].event, 'CheckIn');
+        assert.equal(logs[2].args.participant, accounts[1]);
+        assert.equal(parseNumber(logs[2].args.eventId), eventId);
       });
     });
 
@@ -535,8 +547,8 @@ contract('CyberCore', function(accounts) {
     context('when the specified token frozen', function() {
       it('reverts', async function() {
         await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 721 });
-        await this.token.setMinter(creator, { from: creator });
-        await this.token.freeze(2, { from: creator });
+        await this.core.setMinter(creator, { from: creator });
+        await this.core.freeze(2, { from: creator });
         await assertRevert(this.core.checkIn(2, TOKEN_DATA_STRING, { from: creator }));
       });
     });
@@ -606,7 +618,6 @@ contract('CyberCore', function(accounts) {
     let logs;
 
     beforeEach('close event', async function() {
-      await this.token.setMinter(this.core.address, { from: creator });
       await this.core.createEvent(
         (await latestTime()) + duration.hours(1),
         (await latestTime()) + duration.hours(2),
