@@ -7,7 +7,7 @@ const CyberReceiver = artifacts.require('CyberReceiver');
 
 web3.eth.defaultAccount = web3.eth.accounts[0];
 
-contract('CyberCoin', function (accounts) {
+contract('CyberCoin', function(accounts) {
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
   const MINT_DATA = '0x9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658';
   const creator = accounts[0];
@@ -19,7 +19,7 @@ contract('CyberCoin', function (accounts) {
     this.token = await CyberCoin.new({ from: creator });
     this.receiver = await CyberReceiver.new({ from: creator });
   });
-  
+
   describe('initial', function() {
     const InterfaceId_ERC165 = '0x01ffc9a7';
     const InterfaceId_ERC721 = '0x80ac58cd';
@@ -134,10 +134,7 @@ contract('CyberCoin', function (accounts) {
 
     context('when successfull', function() {
       it('returns token, that is on the given position in the ownedTokens list of the specified address', async function() {
-        assert.equal(
-          parseNumber(await this.token.tokenOfOwnerByIndex(accounts[0], 0)),
-          1
-        );
+        assert.equal(parseNumber(await this.token.tokenOfOwnerByIndex(accounts[0], 0)), 1);
       });
     });
 
@@ -189,10 +186,7 @@ contract('CyberCoin', function (accounts) {
 
     context('when the specified token approval equals to zero', function() {
       it('returns zero address ', async function() {
-        assert.equal(
-          parseString(await this.token.getApproved(2)),
-          ZERO_ADDRESS
-        );
+        assert.equal(parseString(await this.token.getApproved(2)), ZERO_ADDRESS);
       });
     });
 
@@ -341,19 +335,20 @@ contract('CyberCoin', function (accounts) {
   describe('tokenURI', function() {
     const tokenId = 1;
     const unknownTokenId = 2;
+    const uri = '';
 
-    beforeEach('mint a token', async function() {
-      await this.token.setMinter(creator, {from: creator});
-      await this.token.mint(accounts[0], 1, MINT_DATA, { from: creator });
+    beforeEach('mint a token with URI', async function() {
+      await this.token.setMinter(creator, { from: creator });
+      await this.token.mintWithURI(accounts[0], 1, MINT_DATA, uri, { from: creator });
     });
 
     context('when successfull', function() {
       it('returns the specified token URI', async function() {
-        assert.equal(parseString(await this.token.tokenURI(tokenId)), '');
+        assert.equal(parseString(await this.token.tokenURI(tokenId)), uri);
       });
     });
 
-    context('when the specified token doesn\'t exist', function() {
+    context("when the specified token doesn't exist", function() {
       it('reverts', async function() {
         await assertRevert(this.token.tokenURI(unknownTokenId));
       });
@@ -445,7 +440,7 @@ contract('CyberCoin', function (accounts) {
     let logs = null;
 
     beforeEach('set the operator approval', async function() {
-      const result = await this.token.setApprovalForAll(spender, true, {from: owner});
+      const result = await this.token.setApprovalForAll(spender, true, { from: owner });
       logs = result.logs;
     });
 
@@ -465,7 +460,7 @@ contract('CyberCoin', function (accounts) {
 
     context('when zero address specified as tokens spender', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.setApprovalForAll(ZERO_ADDRESS, true, {from: owner}));
+        await assertRevert(this.token.setApprovalForAll(ZERO_ADDRESS, true, { from: owner }));
       });
     });
   });
@@ -489,10 +484,7 @@ contract('CyberCoin', function (accounts) {
 
     context('when successful', function() {
       it('sets the token approval to the zero address', async function() {
-        assert.equal(
-          parseString(await this.token.getApproved(tokenId)),
-          ZERO_ADDRESS
-        );
+        assert.equal(parseString(await this.token.getApproved(tokenId)), ZERO_ADDRESS);
       });
 
       it('emits an Approval event with zero address as spender', async function() {
@@ -544,10 +536,7 @@ contract('CyberCoin', function (accounts) {
 
     const _clearApproval = function() {
       it('sets the token approval to zero address', async function() {
-        assert.equal(
-          parseString(await this.token.getApproved(secondTokenId)),
-          ZERO_ADDRESS
-        );
+        assert.equal(parseString(await this.token.getApproved(secondTokenId)), ZERO_ADDRESS);
       });
     };
 
@@ -584,10 +573,7 @@ contract('CyberCoin', function (accounts) {
         });
 
         it('sets the token owner to recepient', async function() {
-          assert.equal(
-            parseString(await this.token.ownerOf(secondTokenId)),
-            accounts[0]
-          );
+          assert.equal(parseString(await this.token.ownerOf(secondTokenId)), accounts[0]);
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
@@ -670,10 +656,7 @@ contract('CyberCoin', function (accounts) {
         });
 
         it('sets the token owner to recepient', async function() {
-          assert.equal(
-            parseString(await this.token.ownerOf(secondTokenId)),
-            accounts[0]
-          );
+          assert.equal(parseString(await this.token.ownerOf(secondTokenId)), accounts[0]);
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
@@ -752,17 +735,11 @@ contract('CyberCoin', function (accounts) {
         _removeToken();
 
         it('increases the recepient balance', async function() {
-          assert.equal(
-            parseNumber(await this.token.balanceOf(this.receiver.address)),
-            1
-          );
+          assert.equal(parseNumber(await this.token.balanceOf(this.receiver.address)), 1);
         });
 
         it('sets the token owner to recepient', async function() {
-          assert.equal(
-            parseString(await this.token.ownerOf(secondTokenId)),
-            this.receiver.address
-          );
+          assert.equal(parseString(await this.token.ownerOf(secondTokenId)), this.receiver.address);
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
@@ -786,14 +763,9 @@ contract('CyberCoin', function (accounts) {
       context('when zero address specified as token owner', function() {
         it('reverts', async function() {
           await assertRevert(
-            this.token.safeTransferFrom(
-              ZERO_ADDRESS,
-              this.receiver.address,
-              secondTokenId,
-              {
-                from: accounts[1]
-              }
-            )
+            this.token.safeTransferFrom(ZERO_ADDRESS, this.receiver.address, secondTokenId, {
+              from: accounts[1]
+            })
           );
         });
       });
@@ -863,10 +835,7 @@ contract('CyberCoin', function (accounts) {
         });
 
         it('sets the token owner to recepient', async function() {
-          assert.equal(
-            parseString(await this.token.ownerOf(secondTokenId)),
-            accounts[0]
-          );
+          assert.equal(parseString(await this.token.ownerOf(secondTokenId)), accounts[0]);
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
@@ -895,7 +864,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [ZERO_ADDRESS, accounts[0], secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -909,7 +878,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], ZERO_ADDRESS, secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -923,7 +892,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], accounts[0], secondTokenId, data],
-              {from: accounts[2]}
+              { from: accounts[2] }
             )
           );
         });
@@ -938,7 +907,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], accounts[0], secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -952,7 +921,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], accounts[0], unknownTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -965,17 +934,11 @@ contract('CyberCoin', function (accounts) {
         _removeToken();
 
         it('increases the recepient balance', async function() {
-          assert.equal(
-            parseNumber(await this.token.balanceOf(this.receiver.address)),
-            1
-          );
+          assert.equal(parseNumber(await this.token.balanceOf(this.receiver.address)), 1);
         });
 
         it('sets the token owner to recepient', async function() {
-          assert.equal(
-            parseString(await this.token.ownerOf(secondTokenId)),
-            this.receiver.address
-          );
+          assert.equal(parseString(await this.token.ownerOf(secondTokenId)), this.receiver.address);
         });
 
         it("adds token to the list of the recepient's owned tokens", async function() {
@@ -1004,7 +967,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [ZERO_ADDRESS, this.receiver.address, secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -1018,7 +981,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], ZERO_ADDRESS, secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -1032,7 +995,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], this.receiver.address, secondTokenId, data],
-              {from: accounts[2]}
+              { from: accounts[2] }
             )
           );
         });
@@ -1047,7 +1010,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], this.receiver.address, secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -1061,7 +1024,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], this.receiver.address, unknownTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             )
           );
         });
@@ -1077,7 +1040,7 @@ contract('CyberCoin', function (accounts) {
                 'safeTransferFrom',
                 'address,address,uint256,bytes',
                 [accounts[1], this.token.address, secondTokenId, data],
-                {from: accounts[1]}
+                { from: accounts[1] }
               )
             );
           });
@@ -1184,7 +1147,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], accounts[0], secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             );
             logs = result.logs;
           });
@@ -1199,7 +1162,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], accounts[0], secondTokenId, data],
-              {from: accounts[0]}
+              { from: accounts[0] }
             );
             logs = result.logs;
           });
@@ -1216,7 +1179,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], this.receiver.address, secondTokenId, data],
-              {from: accounts[1]}
+              { from: accounts[1] }
             );
             logs = result.logs;
           });
@@ -1231,7 +1194,7 @@ contract('CyberCoin', function (accounts) {
               'safeTransferFrom',
               'address,address,uint256,bytes',
               [accounts[1], this.receiver.address, secondTokenId, data],
-              {from: accounts[0]}
+              { from: accounts[0] }
             );
             logs = result.logs;
           });
@@ -1329,15 +1292,90 @@ contract('CyberCoin', function (accounts) {
 
     context('when zero address given', function() {
       it('reverts', async function() {
-        await assertRevert(this.token.mint(ZERO_ADDRESS, eventId, MINT_DATA, {
+        await assertRevert(
+          this.token.mint(ZERO_ADDRESS, eventId, MINT_DATA, {
             from: minter
-          }));
+          })
+        );
       });
     });
 
     context("when the msg.sender isn't minter", function() {
       it('reverts', async function() {
         await assertRevert(this.token.mint(to, eventId, MINT_DATA, { from: to }));
+      });
+    });
+  });
+
+  describe('mintWithURI', function() {
+    const minter = accounts[0];
+    const to = accounts[1];
+    const tokenId = 1;
+    const eventId = 1;
+    const uri = '';
+
+    let logs = null;
+
+    beforeEach('mint a token', async function() {
+      await this.token.setMinter(minter, { from: creator });
+      let result = await this.token.mintWithURI(to, eventId, MINT_DATA, uri, { from: minter });
+      logs = result.logs;
+    });
+
+    context('when successful', function() {
+      it('increases the total tokens amount', async function() {
+        assert.equal(parseNumber(await this.token.totalSupply()), 1);
+      });
+
+      it('assigns the token to the new owner', async function() {
+        assert.equal(parseString(await this.token.ownerOf(tokenId)), to);
+      });
+
+      it('increases the balance of its owner', async function() {
+        assert.equal(parseNumber(await this.token.balanceOf(to)), 1);
+      });
+
+      it('assigns the token to the given event ID', async function() {
+        assert.equal(parseNumber(await this.token.eventId(tokenId)), eventId);
+      });
+
+      it('sets the token data to the specified value', async function() {
+        assert.equal(parseString(await this.token.getTokenData(tokenId)), MINT_DATA);
+      });
+
+      it('adds the token to the list of the owned tokens', async function() {
+        assert.equal(parseJSON(await this.token.tokensOf(to)), '["1"]');
+      });
+
+      it('adds the token to the allTokens array', async function() {
+        assert.equal(parseNumber(await this.token.tokenByIndex(0)), 1);
+      });
+
+      it('sets the token URI to the specified value', async function() {
+        assert.equal(parseString(await this.token.tokenURI(tokenId)), uri);
+      });
+
+      it('emits a Mint event', async function() {
+        assert.equal(logs.length, 1);
+        assert.equal(logs[0].event, 'Mint');
+        assert.equal(logs[0].args.to, to);
+        assert.equal(logs[0].args.tokenId.toNumber(), tokenId);
+      });
+    });
+
+    context('when zero address given', function() {
+      it('reverts', async function() {
+        await assertRevert(
+          this.token.mintWithURI(ZERO_ADDRESS, eventId, MINT_DATA, uri, {
+            from: minter
+          })
+        );
+      });
+    });
+
+    context("when the msg.sender isn't minter", function() {
+      it('reverts', async function() {
+        await assertRevert(this.token.mintWithURI(to, eventId, MINT_DATA, uri, { from: to }));
       });
     });
   });
