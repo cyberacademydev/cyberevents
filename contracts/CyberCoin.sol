@@ -253,7 +253,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets the given token data
+   * @dev Gets the specified token data
    * @param _tokenId uint ID of the specified token
    * @return bytes32 `_tokenId` data
    */
@@ -263,7 +263,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Gets the given token URI
+   * @dev Gets the specified token URI
    * @param _tokenId uint the specified token ID
    * @return string the `_tokenId` URI
    */
@@ -283,7 +283,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to approve address to spend the owned token
+   * @dev Function to approve an account to spend the specified token
    * @param _spender address the token spender
    * @param _tokenId uint ID of the token to be approved
    */
@@ -299,7 +299,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to set the approval for all owned tokens
+   * @dev Function to set an approval for all owned tokens
    * @param _spender address the tokens spender
    * @param _approve bool approval
    */
@@ -310,7 +310,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to clear approval from owned token
+   * @dev Function to clear approval from the owned token
    * @param _tokenId uint spending token ID
    */
   function clearApproval(uint _tokenId)
@@ -323,10 +323,9 @@ contract CyberCoin is ERC721, Contactable {
 
   /**
    * @dev Method to transfer token from the `msg.sender` balance or from the
-   * @dev account that approved `msg.sender` to spend all owned tokens or the
-   * @dev specified token
-   * @param _from token owner (address)
-   * @param _to token recepient (address)
+   * @dev account that approved `msg.sender` to spend it
+   * @param _from the token owner (address)
+   * @param _to the token recepient (address)
    * @param _tokenId sending token ID (uint)
    */
   function transferFrom(
@@ -351,21 +350,12 @@ contract CyberCoin is ERC721, Contactable {
    * @param _to address the token recepient
    * @param _tokenId uint sending token ID
    */
-  function safeTransferFrom(
-    address _from,
-    address _to,
-    uint _tokenId
-  )
-    public
-  {
-    bytes memory empty;
-    safeTransferFrom(_from, _to, _tokenId, empty);
+  function safeTransferFrom(address _from, address _to, uint _tokenId) public {
+    safeTransferFrom(_from, _to, _tokenId, "");
   }
 
   /**
-   * @dev Function to transfer token with onERC721Received() call if the
-   * @dev token recipient is the smart contract and with the additional
-   * @dev transaction metadata
+   * @dev Safe transfer function with additional transaction metadata
    * @param _from address the token owner
    * @param _to address the token recepient
    * @param _tokenId uint sending token ID
@@ -389,54 +379,91 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Function to freeze the given token. After the token was frozen the
-   * @dev token owner cannot transfer or approve this token
-   * @param _tokenId uint ID of token to be frozen
-   */
-  function freeze(uint _tokenId)
-    public
-    onlyMinter
-    checkFreeze(_tokenId)
-  {
-    freezedTokens[_tokenId] = true;
-    _clearApproval(_tokenId);
-    emit TokenFreeze(_tokenId);
-  }
-
-  /**
    * @dev Function to create a token and send it to the specified account
    * @param _to address the token recepient
    * @param _eventId uint ID of the event for wich the token will be minted
    * @param _data bytes32 value will be used in the `checkIn` function
-   * @return bool the transaction success state
    */
-  function mint(address _to, uint _eventId, bytes32 _data)
+  function mint(address _to, uint _eventId, bytes32 _data) public onlyMinter {
+    require(_mint(_to, _eventId, _data, ""));
+  }
+
+  /**
+   * @dev Function mint a token with the specified URI
+   * @param _to address the token recepient
+   * @param _eventId uint ID of the event for wich the token will be minted
+   * @param _data bytes32 value will be used in the `checkIn` function
+   * @param _uri string the token URI
+   */
+  function mintWithURI(
+    address _to, 
+    uint _eventId, 
+    bytes32 _data, 
+    string _uri
+  )
     public
     onlyMinter
-    returns (bool)
   {
-    require(_to != address(0));
-    require(_eventId > 0);
-
-    totalSupply_ = totalSupply_.add(1);
-    uint tokenId = totalSupply_;
-    allTokensIndex[tokenId] = allTokens.length;
-    allTokens.push(tokenId);
-    tokenEventId[tokenId] = _eventId;
-    tokenData[tokenId] = _data;
-    _addTokenTo(_to, tokenId);
-
-    emit Mint(_to, tokenId);
-    return true;
+    require(_mint(_to, _eventId, _data, _uri));
   }
 
   /**
    * @dev Function to set an account that can mint tokens
    * @param _minter address the minter contract
    */
-  function setMinter(address _minter) external onlyOwner {
+  function setMinter(address _minter) public onlyOwner {
     require(_minter != address(0));
     minter = _minter;
+  }
+
+  /**
+   * @dev Function to freeze the specified token. After the token was frozen
+   * @dev the token owner cannot transfer or approve this token
+   * @param _tokenId uint ID of token to be frozen
+   */
+  function freeze(uint _tokenId) public onlyMinter {
+    _freeze(_tokenId);
+  }
+
+  /**
+   * @dev Internal function to add token to an account
+   * @param _to address the token recepient
+   * @param _tokenId uint sending tokens ID
+   */
+  function _addTokenTo(address _to, uint _tokenId) internal {
+    tokenOwner[_tokenId] = _to;
+    balances[_to] =  balances[_to].add(1);
+    ownedTokensIndex[_tokenId] = ownedTokens[_to].length;
+    ownedTokens[_to].push(_tokenId);
+  }
+
+  /**
+   * @dev Internal function to remove token from the account
+   * @param _tokenId uint owned token ID
+   */
+  function _removeToken(uint _tokenId) internal {
+    uint lastToken = (
+      ownedTokens[ownerOf(_tokenId)]
+      [ownedTokens[ownerOf(_tokenId)].length.sub(1)]
+    );
+    balances[ownerOf(_tokenId)] = balances[ownerOf(_tokenId)].sub(1);
+    ownedTokens[ownerOf(_tokenId)][ownedTokensIndex[_tokenId]] = lastToken;
+    ownedTokens[ownerOf(_tokenId)][ownedTokensIndex[lastToken]] = 0;
+    ownedTokens[ownerOf(_tokenId)].length = (
+      ownedTokens[ownerOf(_tokenId)].length.sub(1)
+    );
+    tokenOwner[_tokenId] = address(0);
+    ownedTokensIndex[lastToken] = ownedTokensIndex[_tokenId];
+    ownedTokensIndex[_tokenId] = 0;
+  }
+
+  /**
+   * @dev Internal function to clear approvals from the token
+   * @param _tokenId uint approved token ID
+   */
+  function _clearApproval(uint _tokenId) internal {
+    tokenApproval[_tokenId] = address(0);
+    emit Approval(ownerOf(_tokenId), address(0), _tokenId);
   }
 
   /**
@@ -472,44 +499,46 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal function to add token to an account
+   * @dev Internal function to create tokens
    * @param _to address the token recepient
-   * @param _tokenId uint sending tokens ID
+   * @param _eventId uint ID of the event for wich the token will be minted
+   * @param _data bytes32 value will be used in the `checkIn` function
+   * @param _uri string the token URI
    */
-  function _addTokenTo(address _to, uint _tokenId) internal {
-    tokenOwner[_tokenId] = _to;
-    balances[_to] =  balances[_to].add(1);
-    ownedTokensIndex[_tokenId] = ownedTokens[_to].length;
-    ownedTokens[_to].push(_tokenId);
+  function _mint(
+    address _to, 
+    uint _eventId, 
+    bytes32 _data, 
+    string _uri
+  )
+    internal
+    returns (bool)
+  {
+    require(_to != address(0));
+    require(_eventId > 0);
+
+    totalSupply_ = totalSupply_.add(1);
+    uint tokenId = totalSupply_;
+    allTokensIndex[tokenId] = allTokens.length;
+    allTokens.push(tokenId);
+    tokenEventId[tokenId] = _eventId;
+    tokenData[tokenId] = _data;
+    _addTokenTo(_to, tokenId);
+    _setTokenURI(tokenId, _uri);
+
+    emit Mint(_to, tokenId);
+    return true;
   }
 
   /**
-   * @dev Internal function to remove token from the account
-   * @param _tokenId uint owned token ID
+   * @dev Internal function to freeze a token
+   * @param _tokenId uint ID of token to be frozen
    */
-  function _removeToken(uint _tokenId) internal {
-    address owner_ = ownerOf(_tokenId);
-    tokenOwner[_tokenId] = address(0);
-    balances[owner_] = balances[owner_].sub(1);
-
-    uint tokenIndex = ownedTokensIndex[_tokenId];
-    uint lastTokenIndex = ownedTokens[owner_].length.sub(1);
-    uint lastToken = ownedTokens[owner_][lastTokenIndex];
-
-    ownedTokens[owner_][tokenIndex] = lastToken;
-    ownedTokens[owner_][lastTokenIndex] = 0;
-    ownedTokens[owner_].length = ownedTokens[owner_].length.sub(1);
-    ownedTokensIndex[_tokenId] = 0;
-    ownedTokensIndex[lastToken] = tokenIndex;
-  }
-
-  /**
-   * @dev Internal function to clear approvals from the token
-   * @param _tokenId uint approved token ID
-   */
-  function _clearApproval(uint _tokenId) internal {
-    tokenApproval[_tokenId] = address(0);
-    emit Approval(ownerOf(_tokenId), address(0), _tokenId);
+  function _freeze(uint _tokenId) internal {
+    require(!tokenFrozen(_tokenId));
+    freezedTokens[_tokenId] = true;
+    _clearApproval(_tokenId);
+    emit TokenFreeze(_tokenId);
   }
 
   /**
@@ -523,7 +552,7 @@ contract CyberCoin is ERC721, Contactable {
   }
 
   /**
-   * @dev Internal function to register the support of an interface
+   * @dev Internal function to register support of an interface
    * @param _interfaceId bytes4 ID of the interface to be registered
    */
   function _registerInterface(bytes4 _interfaceId) internal {
