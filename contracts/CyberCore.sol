@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
 import "./CyberCoin.sol";
-import "openzeppelin-solidity/contracts/ownership/Contactable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
@@ -9,10 +8,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  * @title Cyber Academy DApp core
  * @author [Kolya Kornilov](https://facebook.com/k.kornilov01)
  */
-contract CyberCore is Contactable {
+contract CyberCore is CyberCoin {
   using SafeMath for uint;
-
-  CyberCoin public token;
 
   uint public lastEvent;
   uint[] public allEvents;
@@ -33,29 +30,21 @@ contract CyberCore is Contactable {
 
   mapping (uint => Event) public events;
   mapping (address => mapping (uint => bool)) public participations;
-  mapping (uint => mapping (address => uint)) public paidAmountOf;
+  mapping (address => mapping (uint => uint)) public paidAmountOf;
 
   event EventCreated(uint eventId);
   event EventCanceled(uint eventId);
   event EventClosed(uint eventId);
   event SignUp(address indexed participant, uint indexed eventId);
   event CheckIn(address indexed participant, uint indexed eventId);
-
-  /**
-   * @dev Constructor that sets current CyberCoin address to interact with
-   * @param _token address CyberCoin contract
-   */
-  constructor(CyberCoin _token) public {
-    require(address(_token) != address(0));
-    token = _token;
-  }
+  event Refund(address indexed participant, uint indexed eventId);
 
   /**
    * @dev Fallback function
    * @dev Calls the `signUp` function with the last event ID and keccak256 of 
    * @dev the msg.data in the parameters
    */
-  function() public payable {
+  function() external payable {
     require(signUp(lastEvent, keccak256(msg.data)));
   }
 
@@ -85,7 +74,7 @@ contract CyberCore is Contactable {
       uint paidAmount
     ) 
   {
-    require(exists(_eventId));
+    require(eventExists(_eventId));
     return (
       events[_eventId].eventId,
       events[_eventId].startTime,
@@ -116,7 +105,7 @@ contract CyberCore is Contactable {
       bool canceled
     ) 
   {
-    require(exists(_eventId));
+    require(eventExists(_eventId));
     return(
       events[_eventId].ownerPercent,
       events[_eventId].speakersPercent,
@@ -131,7 +120,7 @@ contract CyberCore is Contactable {
    * @param _eventId uint ID of the validated event
    * @return bool the event existence
    */
-  function exists(uint _eventId) public view returns (bool) {
+  function eventExists(uint _eventId) public view returns (bool) {
     return _eventId <= lastEvent;
   }
 
@@ -148,7 +137,7 @@ contract CyberCore is Contactable {
     returns (bool) 
   {
     require(_who != address(0));
-    require(exists(_eventId));
+    require(eventExists(_eventId));
     return participations[_who][_eventId];
   }
 
@@ -172,7 +161,7 @@ contract CyberCore is Contactable {
     require(!participated(msg.sender, _eventId));
     require(!events[_eventId].canceled);
 
-    require(token.mint(msg.sender, _eventId, _data));
+    require(_mint(msg.sender, _eventId, _data, ""));
     events[_eventId].ticketsAmount = events[_eventId].ticketsAmount.sub(1);
     events[_eventId].paidAmount = events[_eventId].paidAmount.add(msg.value);
     events[_eventId].participants.push(msg.sender);
@@ -193,24 +182,38 @@ contract CyberCore is Contactable {
     public 
     onlyOwner 
   {
-    require(!token.tokenFrozen(_tokenId));
-    require(events[token.eventId(_tokenId)].endTime > now);
-    require(!events[token.eventId(_tokenId)].canceled);
-    require(keccak256(abi.encodePacked(_data)) == token.getTokenData(_tokenId));
+    require(!tokenFrozen(_tokenId));
+    require(events[eventId(_tokenId)].endTime > now);
+    require(!events[eventId(_tokenId)].canceled);
+    require(keccak256(abi.encodePacked(_data)) == getTokenData(_tokenId));
 
-    token.freeze(_tokenId);
+    _freeze(_tokenId);
 
     if (events[_tokenId].ticketPrice > 0) {
-      uint cashback = (
-        events[token.eventId(_tokenId)].ticketPrice.div(100).
-        mul(100 - events[token.eventId(_tokenId)].
-        speakersPercent - events[token.eventId(_tokenId)].
+      ownerOf(_tokenId).transfer(
+        events[eventId(_tokenId)].ticketPrice.div(100).
+        mul(100 - events[eventId(_tokenId)].
+        speakersPercent - events[eventId(_tokenId)].
         ownerPercent)
       );
     }
-    token.ownerOf(_tokenId).transfer(cashback);
 
-    emit CheckIn(token.ownerOf(_tokenId), token.eventId(_tokenId));
+    emit CheckIn(ownerOf(_tokenId), eventId(_tokenId));
+  }
+
+  /**
+   * @dev Function to refund a token
+   * @param _tokenId uint ID of the token to be refunded 
+   */
+  function refund(uint _tokenId) public {
+    require(exists(_tokenId));
+    require(eventExists(eventId(_tokenId)));
+    require(events[eventId(_tokenId)].canceled);
+
+    if (!tokenFrozen(_tokenId)) _freeze(_tokenId);
+    msg.sender.transfer(paidAmountOf[msg.sender][eventId(_tokenId)]);
+
+    emit Refund(msg.sender, eventId(_tokenId));
   }
 
   /**
@@ -267,7 +270,7 @@ contract CyberCore is Contactable {
    * @param _eventId uint an event ID to be canceled
    */
   function cancelEvent(uint _eventId) public onlyOwner {
-    require(exists(_eventId));
+    require(eventExists(_eventId));
     require(!events[_eventId].canceled);
     events[_eventId].canceled = true;
     emit EventCanceled(_eventId);
@@ -280,25 +283,18 @@ contract CyberCore is Contactable {
   function closeEvent(uint _eventId) public onlyOwner {
     require(now > events[_eventId].endTime);
 
-    if (events[_eventId].canceled) {
-      for (uint i = 0; i < events[_eventId].participants.length; i++) {
-        events[_eventId].participants[i].transfer(
-          paidAmountOf[_eventId][events[_eventId].participants[i]]
-        ); 
-      }
-    } else {
+    if (!events[_eventId].canceled) {
       owner.transfer(
         events[_eventId].paidAmount.
         div(100).
         mul(events[_eventId].ownerPercent)
       );
 
-      for (uint j = 0; j < events[_eventId].speakers.length; j++) {
-        events[_eventId].speakers[j].transfer(
+      if (events[_eventId].speakers.length == 1) {
+        events[_eventId].speakers[0].transfer(
           events[_eventId].paidAmount.
           div(100).
-          mul(events[_eventId].speakersPercent).
-          div(events[_eventId].speakers.length)
+          mul(events[_eventId].speakersPercent)
         );
       }
     }
