@@ -1,7 +1,7 @@
 {
-  "name": "cyber-academy-dapp",
+  "name": "cyberevents",
   "version": "0.0.1",
-  "description": "# Cyber Academy DApp\rWe're going to integrate blockchain technology into the events organization! We're always open for our community!",
+  "description": "",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rjkz808/cyber-academy-dapp.git"
+    "url": "git+https://github.com/rjkz808/cyberevents.git"
   },
   "keywords": [],
   "author": "Nick (facebook.com/k.kornilov01)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rjkz808/cyber-academy-dapp/issues"
+    "url": "https://github.com/rjkz808/cyberevents/issues"
   },
-  "homepage": "https://github.com/rjkz808/cyber-academy-dapp#readme",
+  "homepage": "https://github.com/rjkz808/cyberevents#readme",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "bignumber-to-string": "^0.1.4",
