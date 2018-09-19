@@ -16,31 +16,32 @@ If you want to run tests you need next dependencies
 
 Clone this repository
 
-```
-$ git clone https://github.com/cyberevents/cyber-academy-dapp
+```sh
+git clone https://github.com/cyberevents/cyber-academy-dapp
 ```
 
-> _Make sure, that you run all next commands in the repository root_
+> _Make sure that you run all next commands in the repository root_
 
 Install project node dependencies
 
-```
-$ npm install
+```sh
+npm i
 ```
 
-To run all tests
+To run all tests with truffle
 
-```
-$ truffle test --network-<testrpc> // <testrpc> : testrpc you're running (eg --network-ganache, in the truffle.js you can find all networks names)
+```sh
+# <testrpc> : testrpc you're running (eg --network-ganache, in the truffle-config.js you can find all networks names)
+truffle test --network-<testrpc>
 ```
 
 To run the specified test
 
+```sh
+# <path-to-test> : path to the test file you're going to run (eg test/TestTicket.test.js)
+truffle test <path-to-test> --network-ganache 
 ```
-$ truffle test <test> --network-ganache // <test> : path to the test file you're going to run (eg ./test/TestCyberCoin.test.js)
-```
-
 
 # License
 
-Licensed under the [MIT license](https://github.com/cyberevents/cyber-academy-dapp/edit/master/LICENSE), copyright (c) 2018 [Cyber Academy](https://github.com/cyberevents)
+Licensed under the [MIT license](https://github.com/cyberevents/cyber-academy-dapp/edit/master/LICENSE), copyright © 2018 [Cyber Academy](https://github.com/cyberevents)
