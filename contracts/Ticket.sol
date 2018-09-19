@@ -8,15 +8,15 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 /**
- * @title Cyber Academy DApp ERC721 modified token
- * @author [Kolya Kornilov](https://facebook.com/k.kornilov01)
+ * @title Cyberevents ERC721 modified token
+ * @author Kolya Kornilov
  */
-contract CyberCoin is ERC721, Contactable {
+contract Ticket is ERC721, Contactable {
   using AddressUtils for address;
   using SafeMath for uint;
 
-  string internal constant name_ = "CyberCoin";
-  string internal constant symbol_ = "CYBER";
+  string internal constant name_ = "TICKET";
+  string internal constant symbol_ = "TICKET";
 
   bytes4 internal constant ERC721_RECEIVED = 0x150b7a02;
   bytes4 internal constant InterfaceId_ERC165 = 0x01ffc9a7;
