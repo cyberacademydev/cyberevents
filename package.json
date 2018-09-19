@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rjkz808/cyberevents.git"
+    "url": "git+https://github.com/cyberacademia/cyberevents.git"
   },
   "keywords": [],
   "author": "Nkolai Kornilov",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rjkz808/cyberevents/issues"
+    "url": "https://github.com/cyberacademia/cyberevents/issues"
   },
-  "homepage": "https://github.com/rjkz808/cyberevents#readme",
+  "homepage": "https://github.com/cyberacademia/cyberevents#readme",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "bignumber-to-string": "^0.1.4",
