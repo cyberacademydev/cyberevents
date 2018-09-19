@@ -1,8 +1,8 @@
-const CyberCoin = artifacts.require('CyberCoin');
-const CyberCore = artifacts.require('CyberCore');
+const Ticket = artifacts.require('Ticket');
+const Event = artifacts.require('Event');
 
-module.exports = function (deployer, network, accounts) {
-  deployer.deploy(CyberCoin).then(function() {
-    return deployer.deploy(CyberCore, CyberCoin.address)
+module.exports = function(deployer) {
+  deployer.deploy(Ticket).then(function() {
+    return deployer.deploy(Event, Ticket.address);
   });
 };
