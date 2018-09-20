@@ -1,6 +1,6 @@
 ![cyber_academy_01](https://camo.githubusercontent.com/570941ccc5af616edbe376dcfd8d75978223b261/68747470733a2f2f63646e2e65766275632e636f6d2f6576656e746c6f676f732f3235363732393335332f796f75747562652e706e67)
 
-# Cyber Academy DApp
+# Cyberevents
 
 We’re going to realize an automated event organization blockchain platform. Our solution is a DApp, where participants can sign up, get their tickets and easily check in on the event. All these operations occur in the network of smart contracts and the entrance tickets are ERC721 tokens
 
@@ -17,7 +17,7 @@ If you want to run tests you need next dependencies
 Clone this repository
 
 ```sh
-git clone https://github.com/cyberevents/cyber-academy-dapp
+git clone https://github.com/cyberacademia/cyberevents
 ```
 
 > _Make sure that you run all next commands in the repository root_
@@ -39,7 +39,7 @@ To run the specified test
 
 ```sh
 # <path-to-test> : path to the test file you're going to run (eg test/TestTicket.test.js)
-truffle test <path-to-test> --network-ganache 
+truffle test <path-to-test> --network-ganache
 ```
 
 # License
