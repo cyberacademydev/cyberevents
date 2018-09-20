@@ -1,4 +1,4 @@
-![cyber_academy_01](https://github.com/cyberacademia/cyberevents/blob/kovan/img/academy_logo.png)
+![academy_logo](https://github.com/cyberacademia/cyberevents/blob/kovan/img/academy_logo.png)
 
 # Cyberevents
 
