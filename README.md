@@ -25,7 +25,13 @@ git clone https://github.com/cyberacademia/cyberevents
 Install project node dependencies
 
 ```sh
-npm i
+npm install
+```
+
+To run all tests with npm
+
+```sh
+npm test
 ```
 
 To run all tests with truffle
