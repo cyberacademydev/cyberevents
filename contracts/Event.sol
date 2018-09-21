@@ -39,15 +39,6 @@ contract Event is Ticket {
   event Refund(address indexed participant, uint indexed eventId);
 
   /**
-   * @dev Fallback function
-   * @dev Calls the `signUp` function with the last event ID and keccak256 of 
-   * @dev the msg.data in the parameters
-   */
-  function() external payable {
-    require(signUp(lastEvent, keccak256(msg.data)));
-  }
-
-  /**
    * @dev Gets the event data
    * @dev This method is bathed up to the two parts
    * @dev because there's too much arguments to return
