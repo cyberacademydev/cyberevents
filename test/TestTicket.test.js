@@ -2,12 +2,12 @@ const { assertRevert } = require('openzeppelin-solidity/test/helpers/assertRever
 const { parseNumber, parseString, parseJSON } = require('./helpers/BignumberUtils');
 const { sendTransaction } = require('openzeppelin-solidity/test/helpers/sendTransaction');
 
-const CyberCoin = artifacts.require('CyberCoin');
-const CyberReceiver = artifacts.require('CyberReceiver');
+const Ticket = artifacts.require('Ticket');
+const Receiver = artifacts.require('Receiver');
 
 web3.eth.defaultAccount = web3.eth.accounts[0];
 
-contract('CyberCoin', function(accounts) {
+contract('Ticket', function(accounts) {
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
   const MINT_DATA = '0x9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658';
   const creator = accounts[0];
@@ -16,8 +16,8 @@ contract('CyberCoin', function(accounts) {
   let receiver;
 
   beforeEach('deploy new contract for each test', async function() {
-    this.token = await CyberCoin.new({ from: creator });
-    this.receiver = await CyberReceiver.new({ from: creator });
+    this.token = await Ticket.new({ from: creator });
+    this.receiver = await Receiver.new({ from: creator });
   });
 
   describe('initial', function() {

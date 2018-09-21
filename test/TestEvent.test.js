@@ -1,14 +1,13 @@
 const { assertRevert } = require('openzeppelin-solidity/test/helpers/assertRevert');
-const { parseNumber, parseString, parseJSON, parseObject } = require('./helpers/BignumberUtils');
+const { parseNumber, parseString, parseJSON } = require('./helpers/BignumberUtils');
 const { increaseTime, duration } = require('openzeppelin-solidity/test/helpers/increaseTime');
 const { latestTime } = require('openzeppelin-solidity/test/helpers/latestTime');
-const { sendTransaction } = require('openzeppelin-solidity/test/helpers/sendTransaction');
 
-const CyberCore = artifacts.require('CyberCore');
+const Event = artifacts.require('Event');
 
 web3.eth.defaultAccount = web3.eth.accounts[0];
 
-contract('CyberCore', function(accounts) {
+contract('Event', function(accounts) {
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
   const TOKEN_DATA_STRING = 'test';
   const TOKEN_DATA_HASH = '0x9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658';
@@ -17,7 +16,7 @@ contract('CyberCore', function(accounts) {
   let core;
 
   beforeEach('deploy new contracts for each test', async function() {
-    this.core = await CyberCore.new({ from: creator });
+    this.core = await Event.new({ from: creator });
   });
 
   describe('getEvent', function() {
@@ -31,7 +30,7 @@ contract('CyberCore', function(accounts) {
     beforeEach('create an event', async function() {
       startTime = (await latestTime()) + duration.hours(1);
       endTime = (await latestTime()) + duration.hours(2);
-      await this.core.createEvent(startTime, endTime, 0, 100, 25, 25, [accounts[0]], {
+      await this.core.createEvent(startTime, endTime, 0, 100, 0, 50, 50, [accounts[0]], {
         from: creator
       });
     });
@@ -42,6 +41,10 @@ contract('CyberCore', function(accounts) {
       });
 
       context('when successfull', function() {
+        it('returned parameters amount equals to 6', async function() {
+          assert.equal(event.length, 6);
+        });
+
         it('gets the specified event ID', async function() {
           assert.equal(parseNumber(event[0]), eventId);
         });
@@ -80,24 +83,32 @@ contract('CyberCore', function(accounts) {
       });
 
       context('when successfull', function() {
+        it('returned parameters amount equals to 6', async function() {
+          assert.equal(event.length, 6);
+        });
+
+        it('gets the specified event cashback percent', async function() {
+          assert.equal(parseNumber(event[0]), 0);
+        });
+
         it('gets the specified event owner percent', async function() {
-          assert.equal(parseNumber(event[0]), 25);
+          assert.equal(parseNumber(event[1]), 50);
         });
 
         it('gets the specified event speakers percent', async function() {
-          assert.equal(parseNumber(event[1]), 25);
+          assert.equal(parseNumber(event[2]), 50);
         });
 
         it('gets the specified event participants list', async function() {
-          assert.equal(parseJSON(event[2]), '[]');
+          assert.equal(parseJSON(event[3]), '[]');
         });
 
         it('gets the specified event speakers list', async function() {
-          assert.equal(parseJSON(event[3]), '["' + accounts[0] + '"]');
+          assert.equal(parseJSON(event[4]), '["' + accounts[0] + '"]');
         });
 
         it('gets the specified event canceled state', async function() {
-          assert.equal(event[4], false);
+          assert.equal(event[5], false);
         });
       });
 
@@ -109,9 +120,6 @@ contract('CyberCore', function(accounts) {
     });
   });
 
-  // TODO: getUpcomingEvents
-  describe('getUpcomingEvents', function() {});
-
   describe('eventExists', function() {
     const eventId = 1;
     const unknownEventId = 2;
@@ -122,8 +130,9 @@ contract('CyberCore', function(accounts) {
         (await latestTime()) + duration.hours(2),
         0,
         100,
-        25,
-        25,
+        0,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
@@ -153,8 +162,9 @@ contract('CyberCore', function(accounts) {
         (await latestTime()) + duration.hours(2),
         0,
         100,
-        25,
-        25,
+        0,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
@@ -164,8 +174,9 @@ contract('CyberCore', function(accounts) {
         (await latestTime()) + duration.hours(2),
         0,
         100,
-        25,
-        25,
+        0,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
@@ -198,137 +209,6 @@ contract('CyberCore', function(accounts) {
     });
   });
 
-  describe('createEvent', function() {
-    const eventId = 1;
-
-    let startTime;
-    let endTime;
-    let firstEvent;
-    let secondEvent;
-    let logs;
-
-    beforeEach('create an event', async function() {
-      startTime = (await latestTime()) + duration.hours(1);
-      endTime = (await latestTime()) + duration.hours(2);
-      const result = await this.core.createEvent(
-        startTime,
-        endTime,
-        0,
-        100,
-        25,
-        25,
-        [accounts[0]],
-        { from: creator }
-      );
-      logs = result.logs;
-      firstEvent = await this.core.getEventFirst(eventId);
-      secondEvent = await this.core.getEventSecond(eventId);
-    });
-
-    context('when successfull', function() {
-      it('sets the event ID to the current lastEvent value + 1', async function() {
-        assert.equal(parseNumber(firstEvent[0]), eventId);
-      });
-
-      it('sets the event start time', async function() {
-        assert.equal(parseNumber(firstEvent[1]), startTime);
-      });
-
-      it('sets the event end time', async function() {
-        assert.equal(parseNumber(firstEvent[2]), endTime);
-      });
-
-      it('sets the event ticket price', async function() {
-        assert.equal(parseNumber(firstEvent[3]), 0);
-      });
-
-      it('sets the event tickets amount', async function() {
-        assert.equal(parseNumber(firstEvent[4]), 100);
-      });
-
-      it('sets the event paid ETH amount', async function() {
-        assert.equal(parseNumber(firstEvent[5]), 0);
-      });
-
-      it('sets the event owner percent', async function() {
-        assert.equal(parseNumber(secondEvent[0]), 25);
-      });
-
-      it('sets the event speakers percent', async function() {
-        assert.equal(parseNumber(secondEvent[1]), 25);
-      });
-
-      it('sets the event participants array to empty array', async function() {
-        assert.equal(parseJSON(secondEvent[2]), '[]');
-      });
-
-      it('sets the event speakers addresses array', async function() {
-        assert.equal(parseJSON(secondEvent[3]), '["' + accounts[0] + '"]');
-      });
-
-      it('sets the event canceled state', async function() {
-        assert.equal(secondEvent[4], false);
-      });
-
-      it('emits an EventCreated event', async function() {
-        assert.equal(logs.length, 1);
-        assert.equal(logs[0].event, 'EventCreated');
-        assert.equal(logs[0].args.eventId, eventId);
-      });
-    });
-
-    context('when the given start time is smaller or equal to the block.timestamp', function() {
-      it('reverts', async function() {
-        startTime = await latestTime();
-        await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 100, 25, 25, [accounts[0]], {
-            from: creator
-          })
-        );
-      });
-    });
-
-    context('when the given end time is smaller or equal to the event start time', function() {
-      it('reverts', async function() {
-        endTime = startTime;
-        await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 100, 25, 25, [accounts[0]], {
-            from: creator
-          })
-        );
-      });
-    });
-
-    context('when the given tickets amount equals to 0', function() {
-      it('reverts', async function() {
-        await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 0, 25, 25, [accounts[0]], { from: creator })
-        );
-      });
-    });
-
-    context('when the given speakers array length equals to 0', function() {
-      it('reverts', async function() {
-        await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 100, 25, 25, [], { from: creator })
-        );
-      });
-    });
-
-    context(
-      'when the amount of the given speakers and owner percent is bigger than 100',
-      function() {
-        it('reverts', async function() {
-          await assertRevert(
-            this.core.createEvent(startTime, endTime, 0, 100, 100, 100, [accounts[0]], {
-              from: creator
-            })
-          );
-        });
-      }
-    );
-  });
-
   describe('signUp', function() {
     const tokenId = 1;
     const eventId = 1;
@@ -341,8 +221,9 @@ contract('CyberCore', function(accounts) {
         (await latestTime()) + duration.hours(2),
         721,
         2,
-        25,
-        25,
+        50,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
@@ -385,7 +266,7 @@ contract('CyberCore', function(accounts) {
 
       it('adds msg.sender to the specified event participants array', async function() {
         assert.equal(
-          parseJSON((await this.core.getEventSecond(eventId))[2]),
+          parseJSON((await this.core.getEventSecond(eventId))[3]),
           '["' + accounts[1] + '"]'
         );
       });
@@ -423,8 +304,9 @@ contract('CyberCore', function(accounts) {
           (await latestTime()) + duration.seconds(10),
           721,
           1,
-          25,
-          25,
+          50,
+          50,
+          50,
           [accounts[0]],
           { from: creator }
         );
@@ -495,20 +377,21 @@ contract('CyberCore', function(accounts) {
       await this.core.createEvent(
         (await latestTime()) + duration.hours(1),
         (await latestTime()) + duration.hours(2),
-        721,
+        200,
         2,
-        25,
-        25,
+        50,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
-      await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[1], value: 777 });
+      await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[1], value: 200 });
       const result = await this.core.checkIn(tokenId, TOKEN_DATA_STRING, { from: creator });
       logs = result.logs;
     });
 
     context('when succesfull', function() {
-      it('clears approoval of the specified token', async function() {
+      it('clears approval of the specified token', async function() {
         assert.equal(parseString(await this.core.getApproved(tokenId)), ZERO_ADDRESS);
       });
 
@@ -516,7 +399,15 @@ contract('CyberCore', function(accounts) {
         assert.equal(await this.core.tokenFrozen(tokenId), true);
       });
 
-      it('emits an Approval event with zero address specified as spender', async function() {
+      it('sends the cashback back to participant', async function() {
+        assert.equal(parseNumber(web3.eth.getBalance(this.core.address)), 100);
+      });
+
+      it('decreases the specified event paid ETH amount', async function() {
+        assert.equal(parseNumber((await this.core.getEventFirst(eventId))[5]), 100);
+      });
+
+      it('emits an Approval event with zero address specified as token spender', async function() {
         assert.equal(logs.length, 3);
         assert.equal(logs[0].event, 'Approval');
         assert.equal(logs[0].args._owner, accounts[1]);
@@ -546,7 +437,7 @@ contract('CyberCore', function(accounts) {
 
     context('when the specified token frozen', function() {
       it('reverts', async function() {
-        await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 721 });
+        await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 200 });
         await this.core.setMinter(creator, { from: creator });
         await this.core.freeze(2, { from: creator });
         await assertRevert(this.core.checkIn(2, TOKEN_DATA_STRING, { from: creator }));
@@ -555,7 +446,7 @@ contract('CyberCore', function(accounts) {
 
     context('when the block.timestamp is equal or bigger than the event end time', function() {
       it('reverts', async function() {
-        await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 721 });
+        await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 200 });
         await increaseTime(duration.hours(3));
         await assertRevert(this.core.checkIn(2, TOKEN_DATA_STRING, { from: creator }));
       });
@@ -563,11 +454,269 @@ contract('CyberCore', function(accounts) {
 
     context('when the specified event is canceled', function() {
       it('reverts', async function() {
-        await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 721 });
+        await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[2], value: 200 });
         await this.core.cancelEvent(eventId);
         await assertRevert(this.core.checkIn(2, TOKEN_DATA_STRING, { from: creator }));
       });
     });
+  });
+
+  describe('refund', function() {
+    const eventId = 1;
+    const unknownEventId = 2;
+    const tokenId = 1;
+    const unknownTokenId = 2;
+
+    let logs;
+
+    beforeEach('create an event and sign up to it', async function() {
+      await this.core.createEvent(
+        (await latestTime()) + duration.hours(1),
+        (await latestTime()) + duration.hours(2),
+        200,
+        2,
+        50,
+        50,
+        50,
+        [accounts[0]],
+        { from: creator }
+      );
+      await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[1], value: 400 });
+    });
+
+    context('when successfull', function() {
+      beforeEach('cancel event and refund a token', async function() {
+        await this.core.cancelEvent(eventId, { from: creator });
+        const result = await this.core.refund(tokenId, { from: accounts[1] });
+        logs = result.logs;
+      });
+
+      it('clears an approval of the specified token', async function() {
+        assert.equal(parseString(await this.core.getApproved(tokenId)), ZERO_ADDRESS);
+      });
+
+      it('freezes the specified token', async function() {
+        assert.equal(await this.core.tokenFrozen(tokenId), true);
+      });
+
+      it('transfers the paid amount of the participant back', async function() {
+        assert.equal(parseNumber(web3.eth.getBalance(this.core.address)), 0);
+      });
+
+      it('emits an Approval event with zero address specified as token spender', async function() {
+        assert.equal(logs.length, 3);
+        assert.equal(logs[0].event, 'Approval');
+        assert.equal(logs[0].args._owner, accounts[1]);
+        assert.equal(logs[0].args._approved, ZERO_ADDRESS);
+        assert.equal(parseNumber(logs[0].args._tokenId), tokenId);
+      });
+
+      it('emit a TokenFreeze event', async function() {
+        assert.equal(logs.length, 3);
+        assert.equal(logs[1].event, 'TokenFreeze');
+        assert.equal(parseNumber(logs[1].args.tokenId), tokenId);
+      });
+
+      it('emits a Refund event', async function() {
+        assert.equal(logs.length, 3);
+        assert.equal(logs[2].event, 'Refund');
+        assert.equal(logs[2].args.participant, accounts[1]);
+        assert.equal(parseNumber(logs[2].args.eventId), eventId);
+      });
+    });
+
+    context('when the msg.sender already checked on the event', function() {
+      it('performs the function', async function() {
+        await this.core.checkIn(tokenId, TOKEN_DATA_STRING, { from: creator });
+        await this.core.cancelEvent(eventId, { from: creator });
+        const result = await this.core.refund(tokenId, { from: accounts[1] });
+        logs = result.logs;
+
+        assert.equal(parseNumber(web3.eth.getBalance(this.core.address)), 0);
+        assert.equal(logs.length, 1);
+        assert.equal(logs[0].event, 'Refund');
+        assert.equal(logs[0].args.participant, accounts[1]);
+        assert.equal(parseNumber(logs[0].args.eventId), eventId);
+      });
+    });
+
+    context('when the specified token already frozen', function() {
+      it('passes the function without freeze', async function() {
+        await this.core.setMinter(creator, { from: creator });
+        await this.core.freeze(tokenId, { from: creator });
+        await this.core.cancelEvent(eventId, { from: creator });
+        const result = await this.core.refund(tokenId, { from: accounts[1] });
+        logs = result.logs;
+
+        assert.equal(parseNumber(web3.eth.getBalance(this.core.address)), 0);
+        assert.equal(logs.length, 1);
+        assert.equal(logs[0].event, 'Refund');
+        assert.equal(logs[0].args.participant, accounts[1]);
+        assert.equal(parseNumber(logs[0].args.eventId), eventId);
+      });
+    });
+
+    context("when the specified event wasn't canceled", function() {
+      it('reverts', async function() {
+        await assertRevert(this.core.refund(tokenId, { from: accounts[1] }));
+      });
+    });
+
+    context("when the specified token doesn't exist", function() {
+      it('reverts', async function() {
+        await this.core.cancelEvent(eventId, { from: creator });
+        await assertRevert(this.core.refund(unknownTokenId, { from: accounts[1] }));
+      });
+    });
+
+    context("when the specified event doesn't exist", function() {
+      it('reverts', async function() {
+        const newTokenId = unknownTokenId;
+        await this.core.setMinter(creator, { from: creator });
+        await this.core.mint(accounts[1], unknownEventId, TOKEN_DATA_HASH, {
+          from: creator
+        });
+        await assertRevert(this.core.refund(newTokenId, { from: accounts[1] }));
+      });
+    });
+  });
+
+  describe('createEvent', function() {
+    const eventId = 1;
+
+    let startTime;
+    let endTime;
+    let firstEvent;
+    let secondEvent;
+    let logs;
+
+    beforeEach('create an event', async function() {
+      startTime = (await latestTime()) + duration.hours(1);
+      endTime = (await latestTime()) + duration.hours(2);
+      const result = await this.core.createEvent(
+        startTime,
+        endTime,
+        0,
+        100,
+        0,
+        50,
+        50,
+        [accounts[0]],
+        { from: creator }
+      );
+      logs = result.logs;
+      firstEvent = await this.core.getEventFirst(eventId);
+      secondEvent = await this.core.getEventSecond(eventId);
+    });
+
+    context('when successfull', function() {
+      it('sets the event ID to the current lastEvent value + 1', async function() {
+        assert.equal(parseNumber(firstEvent[0]), eventId);
+      });
+
+      it('sets the event start time', async function() {
+        assert.equal(parseNumber(firstEvent[1]), startTime);
+      });
+
+      it('sets the event end time', async function() {
+        assert.equal(parseNumber(firstEvent[2]), endTime);
+      });
+
+      it('sets the event ticket price', async function() {
+        assert.equal(parseNumber(firstEvent[3]), 0);
+      });
+
+      it('sets the event tickets amount', async function() {
+        assert.equal(parseNumber(firstEvent[4]), 100);
+      });
+
+      it('sets the event paid ETH amount', async function() {
+        assert.equal(parseNumber(firstEvent[5]), 0);
+      });
+
+      it('sets the cashback percent', async function() {
+        assert.equal(parseNumber(secondEvent[0]), 0);
+      });
+
+      it('sets the event owner percent', async function() {
+        assert.equal(parseNumber(secondEvent[1]), 50);
+      });
+
+      it('sets the event speakers percent', async function() {
+        assert.equal(parseNumber(secondEvent[2]), 50);
+      });
+
+      it('sets the event participants array to empty array', async function() {
+        assert.equal(parseJSON(secondEvent[3]), '[]');
+      });
+
+      it('sets the event speakers addresses array', async function() {
+        assert.equal(parseJSON(secondEvent[4]), '["' + accounts[0] + '"]');
+      });
+
+      it('sets the event canceled state', async function() {
+        assert.equal(secondEvent[5], false);
+      });
+
+      it('emits an EventCreated event', async function() {
+        assert.equal(logs.length, 1);
+        assert.equal(logs[0].event, 'EventCreated');
+        assert.equal(logs[0].args.eventId, eventId);
+      });
+    });
+
+    context('when the given start time is smaller or equal to the block.timestamp', function() {
+      it('reverts', async function() {
+        startTime = await latestTime();
+        await assertRevert(
+          this.core.createEvent(startTime, endTime, 0, 100, 50, 50, 50, [accounts[0]], {
+            from: creator
+          })
+        );
+      });
+    });
+
+    context('when the given end time is smaller or equal to the event start time', function() {
+      it('reverts', async function() {
+        endTime = startTime;
+        await assertRevert(
+          this.core.createEvent(startTime, endTime, 0, 100, 50, 50, 50, [accounts[0]], {
+            from: creator
+          })
+        );
+      });
+    });
+
+    context('when the given tickets amount equals to 0', function() {
+      it('reverts', async function() {
+        await assertRevert(
+          this.core.createEvent(startTime, endTime, 0, 0, 50, 50, 50, [accounts[0]], {
+            from: creator
+          })
+        );
+      });
+    });
+
+    context('when the given speakers array length equals to 0', function() {
+      it('reverts', async function() {
+        await assertRevert(
+          this.core.createEvent(startTime, endTime, 0, 100, 50, 50, 50, [], { from: creator })
+        );
+      });
+    });
+
+    context(
+      'when the amount of the given speakers and owner percent is bigger than 100',
+      function() {
+        it('reverts', async function() {
+          await assertRevert(
+            this.core.createEvent(startTime, endTime, 0, 100, 50, 100, 100, [accounts[0]], {
+              from: creator
+            })
+          );
+        });
+      }
+    );
   });
 
   describe('cancelEvent', function() {
@@ -582,8 +731,9 @@ contract('CyberCore', function(accounts) {
         (await latestTime()) + duration.hours(2),
         721,
         2,
-        25,
-        25,
+        50,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
@@ -593,8 +743,8 @@ contract('CyberCore', function(accounts) {
     });
 
     context('when successfull', function() {
-      it('sets the specified event cancel state to true', async function() {
-        assert.equal((await this.core.getEventSecond(eventId))[4], true);
+      it('sets the specified event canceled state to true', async function() {
+        assert.equal((await this.core.getEventSecond(eventId))[5], true);
       });
     });
 
@@ -613,6 +763,7 @@ contract('CyberCore', function(accounts) {
 
   describe('closeEvent', function() {
     const eventId = 1;
+    const unknownEventId = 2;
     const tokenId = 1;
 
     let logs;
@@ -621,29 +772,51 @@ contract('CyberCore', function(accounts) {
       await this.core.createEvent(
         (await latestTime()) + duration.hours(1),
         (await latestTime()) + duration.hours(2),
-        721,
+        200,
         2,
-        25,
-        25,
+        50,
+        50,
+        50,
         [accounts[0]],
         { from: creator }
       );
-      await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[1], value: 777 });
+      await this.core.signUp(eventId, TOKEN_DATA_HASH, { from: accounts[1], value: 400 });
       await this.core.checkIn(tokenId, TOKEN_DATA_STRING, { from: creator });
-      await increaseTime(duration.hours(3));
-      const result = await this.core.closeEvent(eventId);
-      logs = result.logs;
     });
 
     context('when successfull', function() {
+      beforeEach('close an event', async function() {
+        await increaseTime(duration.hours(3));
+        const result = await this.core.closeEvent(eventId);
+        logs = result.logs;
+      });
+
+      it('distributes the paid ETH', async function() {
+        assert.equal(parseNumber(web3.eth.getBalance(this.core.address)), 0);
+      });
+
+      it('burns remaining tickets', async function() {
+        assert.equal(parseNumber((await this.core.getEventFirst(eventId))[4]), 0);
+      });
+
       it('emits an EventClosed event', async function() {
         assert.equal(logs.length, 1);
         assert.equal(logs[0].event, 'EventClosed');
         assert.equal(parseNumber(logs[0].args.eventId), eventId);
       });
     });
-  });
 
-  // TODO: fallback function test
-  describe('fallback', function() {});
+    context("when the specified event doesn't exist", function() {
+      it('reverts', async function() {
+        await increaseTime(duration.hours(3));
+        await assertRevert(this.core.closeEvent(unknownEventId));
+      });
+    });
+
+    context("when the specified event hasn't passed yet", function() {
+      it('reverts', async function() {
+        await assertRevert(this.core.closeEvent(eventId));
+      });
+    });
+  });
 });

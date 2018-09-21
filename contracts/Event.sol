@@ -1,20 +1,19 @@
 pragma solidity ^0.4.24;
 
-import "./CyberCoin.sol";
+import "./Ticket.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 /**
- * @title Cyber Academy DApp core
- * @author [Kolya Kornilov](https://facebook.com/k.kornilov01)
+ * @title Cyberevents core
  */
-contract CyberCore is CyberCoin {
+contract Event is Ticket {
   using SafeMath for uint;
 
   uint public lastEvent;
   uint[] public allEvents;
 
-  struct Event {
+  struct EventPattern {
     uint eventId;
     uint startTime;
     uint endTime;
@@ -28,7 +27,7 @@ contract CyberCore is CyberCoin {
     bool canceled;
   }
 
-  mapping (uint => Event) public events;
+  mapping (uint => EventPattern) public events;
   mapping (address => mapping (uint => bool)) public participations;
   mapping (address => mapping (uint => uint)) public paidAmountOf;
 
@@ -246,7 +245,7 @@ contract CyberCore is CyberCoin {
 
     lastEvent++;
     address[] memory participants_;
-    Event memory event_ = Event({
+    EventPattern memory event_ = EventPattern({
       eventId         : lastEvent,
       startTime       : _startTime,
       endTime         : _endTime,
