@@ -1,15 +1,13 @@
 pragma solidity ^0.4.24;
 
 import "./Ticket.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 /**
  * @title Cyberevents core
+ * @author Kolya Kornilov
  */
 contract Event is Ticket {
-  using SafeMath for uint;
-
   uint public lastEvent;
   uint[] public allEvents;
 
@@ -20,6 +18,7 @@ contract Event is Ticket {
     uint ticketPrice;
     uint ticketsAmount;
     uint paidAmount;
+    uint cashbackPercent;
     uint ownerPercent;
     uint speakersPercent;
     address[] participants;
@@ -37,15 +36,6 @@ contract Event is Ticket {
   event SignUp(address indexed participant, uint indexed eventId);
   event CheckIn(address indexed participant, uint indexed eventId);
   event Refund(address indexed participant, uint indexed eventId);
-
-  /**
-   * @dev Fallback function
-   * @dev Calls the `signUp` function with the last event ID and keccak256 of 
-   * @dev the msg.data in the parameters
-   */
-  function() external payable {
-    require(signUp(lastEvent, keccak256(msg.data)));
-  }
 
   /**
    * @dev Gets the event data
@@ -97,15 +87,17 @@ contract Event is Ticket {
     public 
     view 
     returns (
+      uint cashbackPercent,
       uint ownerPercent,
       uint speakersPercent,
       address[] participants,
       address[] speakers,
       bool canceled
-    ) 
+    )
   {
     require(eventExists(_eventId));
     return(
+      events[_eventId].cashbackPercent,
       events[_eventId].ownerPercent,
       events[_eventId].speakersPercent,
       events[_eventId].participants,
@@ -152,7 +144,7 @@ contract Event is Ticket {
    * @param _eventId uint event's ID participant
    * @param _data bytes32 value will be used in the `checkIn` function
    */
-  function signUp(uint _eventId, bytes32 _data) public payable returns (bool) {
+  function signUp(uint _eventId, bytes32 _data) public payable {
     require(now < events[_eventId].startTime);
     require(events[_eventId].ticketsAmount > 0);
     require(msg.value >= events[_eventId].ticketPrice);
@@ -165,11 +157,11 @@ contract Event is Ticket {
     events[_eventId].paidAmount = events[_eventId].paidAmount.add(msg.value);
     events[_eventId].participants.push(msg.sender);
     participations[msg.sender][_eventId] = true;
+    paidAmountOf[msg.sender][_eventId] = msg.value;
 
     emit SignUp(msg.sender, _eventId);
-    return true;
   }
-
+  
   /**
    * @dev Function to check the participant on the event
    * @param _tokenId uint ID of the token minted for the specified event
@@ -178,7 +170,7 @@ contract Event is Ticket {
    * @notice token `bytes32` data (can be received from the `getTokenData(uint)` function)
    */
   function checkIn(uint _tokenId, string _data) 
-    public 
+    public
     onlyOwner 
   {
     require(!tokenFrozen(_tokenId));
@@ -188,12 +180,24 @@ contract Event is Ticket {
 
     _freeze(_tokenId);
 
-    if (events[_tokenId].ticketPrice > 0) {
+    if (events[_tokenId].ticketPrice > 0 wei) {
       ownerOf(_tokenId).transfer(
         events[eventId(_tokenId)].ticketPrice.div(100).
-        mul(100 - events[eventId(_tokenId)].
-        speakersPercent - events[eventId(_tokenId)].
-        ownerPercent)
+        mul(events[eventId(_tokenId)].cashbackPercent)
+      );
+      events[eventId(_tokenId)].paidAmount = (
+        events[eventId(_tokenId)].paidAmount.
+        sub(
+          events[eventId(_tokenId)].ticketPrice.div(100).
+          mul(events[eventId(_tokenId)].cashbackPercent)
+        )
+      );
+      paidAmountOf[ownerOf(_tokenId)][eventId(_tokenId)] = (
+        paidAmountOf[ownerOf(_tokenId)][eventId(_tokenId)].
+        sub(
+          events[eventId(_tokenId)].ticketPrice.div(100).
+          mul(events[eventId(_tokenId)].cashbackPercent)
+        )
       );
     }
 
@@ -205,12 +209,19 @@ contract Event is Ticket {
    * @param _tokenId uint ID of the token to be refunded 
    */
   function refund(uint _tokenId) public {
+    require(events[eventId(_tokenId)].canceled);
     require(exists(_tokenId));
     require(eventExists(eventId(_tokenId)));
-    require(events[eventId(_tokenId)].canceled);
 
     if (!tokenFrozen(_tokenId)) _freeze(_tokenId);
-    msg.sender.transfer(paidAmountOf[msg.sender][eventId(_tokenId)]);
+    if (events[eventId(_tokenId)].ticketPrice > 0 wei) {
+      msg.sender.transfer(paidAmountOf[msg.sender][eventId(_tokenId)]);
+      events[eventId(_tokenId)].paidAmount = (
+        events[eventId(_tokenId)].paidAmount.
+        sub(paidAmountOf[msg.sender][eventId(_tokenId)])
+      );
+      paidAmountOf[msg.sender][eventId(_tokenId)] = 0 wei;
+    }
 
     emit Refund(msg.sender, eventId(_tokenId));
   }
@@ -230,6 +241,7 @@ contract Event is Ticket {
     uint _endTime,
     uint _ticketPrice,
     uint _ticketsAmount,
+    uint _cashbackPercent,
     uint _ownerPercent,
     uint _speakersPercent,
     address[] _speakers
@@ -241,7 +253,9 @@ contract Event is Ticket {
     require(_endTime > _startTime);
     require(_ticketsAmount > 0);
     require(_speakers.length > 0);
-    require(_ownerPercent.add(_speakersPercent) <= 100);
+    require(_ownerPercent.add(_speakersPercent) == 100);
+    require(_cashbackPercent <= 100);
+    if (_ticketPrice > 0 wei) require(_ticketPrice >= 100 wei);
 
     lastEvent++;
     address[] memory participants_;
@@ -251,8 +265,9 @@ contract Event is Ticket {
       endTime         : _endTime,
       ticketPrice     : _ticketPrice,
       ticketsAmount   : _ticketsAmount,
-      paidAmount      : 0,
+      paidAmount      : 0 wei,
       participants    : participants_,
+      cashbackPercent : _cashbackPercent,
       ownerPercent    : _ownerPercent,
       speakersPercent : _speakersPercent,
       speakers        : _speakers,
@@ -281,8 +296,9 @@ contract Event is Ticket {
    */
   function closeEvent(uint _eventId) public onlyOwner {
     require(now > events[_eventId].endTime);
+    require(eventExists(_eventId));
 
-    if (!events[_eventId].canceled) {
+    if (!events[_eventId].canceled && events[_eventId].paidAmount > 0 wei) {
       owner.transfer(
         events[_eventId].paidAmount.
         div(100).
