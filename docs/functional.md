@@ -25,7 +25,7 @@
         5. Owner percent
         6. Speakers percent
         7. Array with speakers addresses
-    4. Cancel event (only owner can) - all collected ETH are sending back to participiants and no one more can sign up or check in to this event
+    4. Cancel event (only owner can) - nobody can register or check-in for this event
     5. Close event (only owner can) - all colected ETH will be distributed between contract owner and speakers.
     6. Sign up - user pay ETH to the contract and receive ticket (token) - he should show it when he comes to event, otherwise he won't get back
     his participant percent (cashback) (if it doesn't equals to 0)
