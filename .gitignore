@@ -24,7 +24,7 @@ coverage
 # Grunt intermediate storage
 .grunt
 
-# Bower dependency directory 
+# Bower dependency directory
 bower_components
 
 # node-waf configuration
