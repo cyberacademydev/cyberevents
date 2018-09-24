@@ -396,9 +396,9 @@ contract Ticket is ERC721, Contactable {
    * @param _uri string the token URI
    */
   function mintWithURI(
-    address _to, 
-    uint _eventId, 
-    bytes32 _data, 
+    address _to,
+    uint _eventId,
+    bytes32 _data,
     string _uri
   )
     public
@@ -506,9 +506,9 @@ contract Ticket is ERC721, Contactable {
    * @param _uri string the token URI
    */
   function _mint(
-    address _to, 
-    uint _eventId, 
-    bytes32 _data, 
+    address _to,
+    uint _eventId,
+    bytes32 _data,
     string _uri
   )
     internal

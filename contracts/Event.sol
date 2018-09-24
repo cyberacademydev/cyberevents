@@ -52,8 +52,8 @@ contract Event is Ticket {
    * @return paidAmount uint the total paid for the event tickets ETH amount
    */
   function getEventFirst(uint _eventId)
-    public 
-    view 
+    public
+    view
     returns (
       uint eventId,
       uint startTime,
@@ -61,7 +61,7 @@ contract Event is Ticket {
       uint ticketPrice,
       uint ticketsAmount,
       uint paidAmount
-    ) 
+    )
   {
     require(eventExists(_eventId));
     return (
@@ -84,8 +84,8 @@ contract Event is Ticket {
    * @return canceled bool state of the event (`true` if canceled)
    */
   function getEventSecond(uint _eventId)
-    public 
-    view 
+    public
+    view
     returns (
       uint cashbackPercent,
       uint ownerPercent,
@@ -116,16 +116,16 @@ contract Event is Ticket {
   }
 
   /**
-   * @dev Function to get the participation status of an account in the 
+   * @dev Function to get the participation status of an account in the
    * @dev specified event
    * @param _who address perhaps the participant
    * @param _eventId uint ID of the event
    * @return bool `true` if participated
    */
-  function participated(address _who, uint _eventId) 
-    public 
-    view 
-    returns (bool) 
+  function participated(address _who, uint _eventId)
+    public
+    view
+    returns (bool)
   {
     require(_who != address(0));
     require(eventExists(_eventId));
@@ -137,7 +137,7 @@ contract Event is Ticket {
    * @dev - participant pays ETH for a ticket
    * @dev - the function calls the CyberCoin `mint` function
    * @dev - partipant receives his ticket (token)
-   * @notice Participant can paid amount bigger, that the ticket price but 
+   * @notice Participant can paid amount bigger, that the ticket price but
    * @notice when he will receive the cashback he will get the participant
    * @notice percent only from the ticket price, so amount paid from above will
    * @notice share the contract owner and speakers
@@ -161,17 +161,17 @@ contract Event is Ticket {
 
     emit SignUp(msg.sender, _eventId);
   }
-  
+
   /**
    * @dev Function to check the participant on the event
    * @param _tokenId uint ID of the token minted for the specified event
    * @param _data string the token data
-   * @notice the `keccak256` of the `_data` should be equal to the specified 
+   * @notice the `keccak256` of the `_data` should be equal to the specified
    * @notice token `bytes32` data (can be received from the `getTokenData(uint)` function)
    */
-  function checkIn(uint _tokenId, string _data) 
+  function checkIn(uint _tokenId, string _data)
     public
-    onlyOwner 
+    onlyOwner
   {
     require(!tokenFrozen(_tokenId));
     require(events[eventId(_tokenId)].endTime > now);
@@ -206,7 +206,7 @@ contract Event is Ticket {
 
   /**
    * @dev Function to refund a token
-   * @param _tokenId uint ID of the token to be refunded 
+   * @param _tokenId uint ID of the token to be refunded
    */
   function refund(uint _tokenId) public {
     require(events[eventId(_tokenId)].canceled);
@@ -245,8 +245,8 @@ contract Event is Ticket {
     uint _ownerPercent,
     uint _speakersPercent,
     address[] _speakers
-  ) 
-    public 
+  )
+    public
     onlyOwner
   {
     require(_startTime > now);
