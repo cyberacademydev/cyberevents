@@ -30,91 +30,131 @@ contract('Event', function(accounts) {
     beforeEach('create an event', async function() {
       startTime = (await latestTime()) + duration.hours(1);
       endTime = (await latestTime()) + duration.hours(2);
-      await this.core.createEvent(startTime, endTime, 0, 100, 0, 50, 50, [accounts[0]], {
-        from: creator
-      });
+      await this.core.createEvent(
+        startTime,
+        endTime,
+        0,
+        100,
+        0,
+        50,
+        50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+        [accounts[0]],
+        { from: creator }
+      );
     });
 
-    describe('first', function() {
-      beforeEach('call getEventFirst', async function() {
-        event = await this.core.getEventFirst(eventId);
+    describe('properties', function() {
+      beforeEach('call getEventProperties', async function() {
+        event = await this.core.getEventProperties(eventId);
       });
 
       context('when successfull', function() {
-        it('returned parameters amount equals to 6', async function() {
-          assert.equal(event.length, 6);
-        });
-
-        it('gets the specified event ID', async function() {
-          assert.equal(parseNumber(event[0]), eventId);
+        it('returned parameters amount equals to 7', async function() {
+          assert.equal(event.length, 7);
         });
 
         it('gets the specified event start time', async function() {
-          assert.equal(parseNumber(event[1]), startTime);
+          assert.equal(parseNumber(event[0]), startTime);
         });
 
         it('gets the specified event end time', async function() {
-          assert.equal(parseNumber(event[2]), endTime);
+          assert.equal(parseNumber(event[1]), endTime);
         });
 
         it('gets the specified event ticket price', async function() {
+          assert.equal(parseNumber(event[2]), 0);
+        });
+
+        it('gets the specified event cashback percent', async function() {
           assert.equal(parseNumber(event[3]), 0);
         });
 
-        it('gets the specified event tickets amount', async function() {
-          assert.equal(parseNumber(event[4]), 100);
+        it('gets the specified event owner percent', async function() {
+          assert.equal(parseNumber(event[4]), 50);
         });
 
-        it('gets the specified event paid ETH amount', async function() {
-          assert.equal(parseNumber(event[5]), 0);
+        it('gets the specified event speakers percent', async function() {
+          assert.equal(parseNumber(event[5]), 50);
+        });
+
+        it('gets the specified event speakers array', async function() {
+          assert.equal(parseJSON(event[6]), '["' + accounts[0] + '"]');
         });
       });
 
       context("when the specified event doesn't exist", function() {
         it('reverts', async function() {
-          await assertRevert(this.core.getEventFirst(unknownEventId));
+          await assertRevert(this.core.getEventProperties(unknownEventId));
         });
       });
     });
 
-    describe('second', function() {
-      beforeEach('call getEventFirst', async function() {
-        event = await this.core.getEventSecond(eventId);
+    describe('state', function() {
+      beforeEach('call getEventState', async function() {
+        event = await this.core.getEventState(eventId);
       });
 
       context('when successfull', function() {
-        it('returned parameters amount equals to 6', async function() {
-          assert.equal(event.length, 6);
+        it('returned parameters amount equals to 4', async function() {
+          assert.equal(event.length, 4);
         });
 
-        it('gets the specified event cashback percent', async function() {
-          assert.equal(parseNumber(event[0]), 0);
+        it('gets the specified event tickets amount', async function() {
+          assert.equal(parseNumber(event[0]), 100);
         });
 
-        it('gets the specified event owner percent', async function() {
-          assert.equal(parseNumber(event[1]), 50);
+        it('gets the specified event paid wei amount', async function() {
+          assert.equal(parseNumber(event[1]), 0);
         });
 
-        it('gets the specified event speakers percent', async function() {
-          assert.equal(parseNumber(event[2]), 50);
+        it('gets the specified event participants array', async function() {
+          assert.equal(parseJSON(event[2]), '[]');
         });
 
-        it('gets the specified event participants list', async function() {
-          assert.equal(parseJSON(event[3]), '[]');
-        });
-
-        it('gets the specified event speakers list', async function() {
-          assert.equal(parseJSON(event[4]), '["' + accounts[0] + '"]');
-        });
-
-        it('gets the specified event canceled state', async function() {
-          assert.equal(event[5], false);
+        it('gets the specified event cancel state', async function() {
+          assert.equal(event[3], false);
         });
       });
 
       context("when the specified event doesn't exist", function() {
         it('reverts', async function() {
-          await assertRevert(this.core.getEventFirst(unknownEventId));
+          await assertRevert(this.core.getEventState(unknownEventId));
+        });
+      });
+    });
+
+    describe('data', function() {
+      beforeEach('call getEventData', async function() {
+        event = await this.core.getEventData(eventId);
+      });
+
+      context('when successfull', function() {
+        it('returned parameters amount equals to 4', async function() {
+          assert.equal(event.length, 3);
+        });
+
+        it('gets the specified event IPFS hash', async function() {
+          assert.equal(
+            parseString(event[0]),
+            '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
+          );
+        });
+
+        it('gets the specified event ipfs hash function', async function() {
+          assert.equal(parseNumber(event[1]), 12);
+        });
+
+        it('gets the specified event ipfs hash size', async function() {
+          assert.equal(parseNumber(event[2]), 20);
+        });
+      });
+
+      context("when the specified event doesn't exist", function() {
+        it('reverts', async function() {
+          await assertRevert(this.core.getEventData(unknownEventId));
         });
       });
     });
@@ -133,6 +173,9 @@ contract('Event', function(accounts) {
         0,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -165,6 +208,9 @@ contract('Event', function(accounts) {
         0,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -177,6 +223,9 @@ contract('Event', function(accounts) {
         0,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -224,6 +273,9 @@ contract('Event', function(accounts) {
         50,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -257,16 +309,16 @@ contract('Event', function(accounts) {
       });
 
       it('decreases the specified event tickets amount', async function() {
-        assert.equal(parseNumber((await this.core.getEventFirst(eventId))[4]), 1);
+        assert.equal(parseNumber((await this.core.getEventState(eventId))[0]), 1);
       });
 
       it('increases the specified event paid ETH amount', async function() {
-        assert.equal(parseNumber((await this.core.getEventFirst(eventId))[5]), 721);
+        assert.equal(parseNumber((await this.core.getEventState(eventId))[1]), 721);
       });
 
       it('adds msg.sender to the specified event participants array', async function() {
         assert.equal(
-          parseJSON((await this.core.getEventSecond(eventId))[3]),
+          parseJSON((await this.core.getEventState(eventId))[2]),
           '["' + accounts[1] + '"]'
         );
       });
@@ -300,17 +352,20 @@ contract('Event', function(accounts) {
     context('when the block.timestamp is equal or bigger than the event start time', function() {
       it('reverts', async function() {
         await this.core.createEvent(
-          (await latestTime()) + duration.seconds(5),
           (await latestTime()) + duration.seconds(10),
+          (await latestTime()) + duration.seconds(20),
           721,
           1,
           50,
           50,
           50,
+          12,
+          20,
+          '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
           [accounts[0]],
           { from: creator }
         );
-        await increaseTime(duration.seconds(7));
+        await increaseTime(duration.seconds(15));
         await assertRevert(this.core.signUp(2, TOKEN_DATA_HASH, { from: accounts[2], value: 721 }));
       });
     });
@@ -382,6 +437,9 @@ contract('Event', function(accounts) {
         50,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -404,7 +462,7 @@ contract('Event', function(accounts) {
       });
 
       it('decreases the specified event paid ETH amount', async function() {
-        assert.equal(parseNumber((await this.core.getEventFirst(eventId))[5]), 100);
+        assert.equal(parseNumber((await this.core.getEventState(eventId))[1]), 100);
       });
 
       it('emits an Approval event with zero address specified as token spender', async function() {
@@ -478,6 +536,9 @@ contract('Event', function(accounts) {
         50,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -601,67 +662,79 @@ contract('Event', function(accounts) {
         0,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
       logs = result.logs;
-      firstEvent = await this.core.getEventFirst(eventId);
-      secondEvent = await this.core.getEventSecond(eventId);
+      properties = await this.core.getEventProperties(eventId);
+      state = await this.core.getEventState(eventId);
+      data = await this.core.getEventData(eventId);
     });
 
     context('when successfull', function() {
-      it('sets the event ID to the current lastEvent value + 1', async function() {
-        assert.equal(parseNumber(firstEvent[0]), eventId);
+      context('properties', function() {
+        it('sets the event start time', async function () {
+          assert.equal(parseNumber(properties[0]), startTime);
+        });
+
+        it('sets the event end time', async function () {
+          assert.equal(parseNumber(properties[1]), endTime);
+        });
+
+        it('sets the event ticket price', async function () {
+          assert.equal(parseNumber(properties[2]), 0);
+        });
+
+        it('sets the event cashback percent', async function () {
+          assert.equal(parseNumber(properties[3]), 0);
+        });
+
+        it('sets the event owner percent', async function () {
+          assert.equal(parseNumber(properties[4]), 50);
+        });
+
+        it('sets the event speakers percent', async function () {
+          assert.equal(parseNumber(properties[5]), 50);
+        });
+
+        it('sets the event speakers array', async function () {
+          assert.equal(parseJSON(properties[6]), '["' + accounts[0] + '"]');
+        });
       });
 
-      it('sets the event start time', async function() {
-        assert.equal(parseNumber(firstEvent[1]), startTime);
+      describe('state', function () {
+        it('sets the event tickets amount', async function () {
+          assert.equal(parseNumber(state[0]), 100);
+        });
+
+        it('sets the event paid wei amount to 0', async function () {
+          assert.equal(parseNumber(state[1]), 0);
+        });
+
+        it('sets the event participants array to the empty array', async function () {
+          assert.equal(parseJSON(state[2]), '[]');
+        });
+
+        it('sets the event cancel state to false', async function () {
+          assert.equal(state[3], false);
+        });
       });
 
-      it('sets the event end time', async function() {
-        assert.equal(parseNumber(firstEvent[2]), endTime);
-      });
+      describe('data', function () {
+        it('sets the event IPFS hash', async function () {
+          assert.equal(parseString(data[0]), '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08');
+        });
 
-      it('sets the event ticket price', async function() {
-        assert.equal(parseNumber(firstEvent[3]), 0);
-      });
+        it('sets the event ipfs hash function', async function () {
+          assert.equal(parseNumber(data[1]), 12);
+        });
 
-      it('sets the event tickets amount', async function() {
-        assert.equal(parseNumber(firstEvent[4]), 100);
-      });
-
-      it('sets the event paid ETH amount', async function() {
-        assert.equal(parseNumber(firstEvent[5]), 0);
-      });
-
-      it('sets the cashback percent', async function() {
-        assert.equal(parseNumber(secondEvent[0]), 0);
-      });
-
-      it('sets the event owner percent', async function() {
-        assert.equal(parseNumber(secondEvent[1]), 50);
-      });
-
-      it('sets the event speakers percent', async function() {
-        assert.equal(parseNumber(secondEvent[2]), 50);
-      });
-
-      it('sets the event participants array to empty array', async function() {
-        assert.equal(parseJSON(secondEvent[3]), '[]');
-      });
-
-      it('sets the event speakers addresses array', async function() {
-        assert.equal(parseJSON(secondEvent[4]), '["' + accounts[0] + '"]');
-      });
-
-      it('sets the event canceled state', async function() {
-        assert.equal(secondEvent[5], false);
-      });
-
-      it('emits an EventCreated event', async function() {
-        assert.equal(logs.length, 1);
-        assert.equal(logs[0].event, 'EventCreated');
-        assert.equal(logs[0].args.eventId, eventId);
+        it('sets the event ipfs hash size', async function () {
+          assert.equal(parseNumber(data[2]), 20);
+        });
       });
     });
 
@@ -669,9 +742,20 @@ contract('Event', function(accounts) {
       it('reverts', async function() {
         startTime = await latestTime();
         await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 100, 50, 50, 50, [accounts[0]], {
-            from: creator
-          })
+          this.core.createEvent(
+            startTime,
+            endTime,
+            0,
+            100,
+            0,
+            50,
+            50,
+            12,
+            20,
+            '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+            [accounts[0]],
+            { from: creator }
+          )
         );
       });
     });
@@ -680,9 +764,20 @@ contract('Event', function(accounts) {
       it('reverts', async function() {
         endTime = startTime;
         await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 100, 50, 50, 50, [accounts[0]], {
-            from: creator
-          })
+          this.core.createEvent(
+            startTime,
+            endTime,
+            0,
+            100,
+            0,
+            50,
+            50,
+            12,
+            20,
+            '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+            [accounts[0]],
+            { from: creator }
+          )
         );
       });
     });
@@ -690,9 +785,20 @@ contract('Event', function(accounts) {
     context('when the given tickets amount equals to 0', function() {
       it('reverts', async function() {
         await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 0, 50, 50, 50, [accounts[0]], {
-            from: creator
-          })
+          this.core.createEvent(
+            startTime,
+            endTime,
+            0,
+            0,
+            0,
+            50,
+            50,
+            12,
+            20,
+            '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+            [accounts[0]],
+            { from: creator }
+          )
         );
       });
     });
@@ -700,7 +806,20 @@ contract('Event', function(accounts) {
     context('when the given speakers array length equals to 0', function() {
       it('reverts', async function() {
         await assertRevert(
-          this.core.createEvent(startTime, endTime, 0, 100, 50, 50, 50, [], { from: creator })
+          this.core.createEvent(
+            startTime,
+            endTime,
+            0,
+            100,
+            0,
+            50,
+            50,
+            12,
+            20,
+            '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+            [],
+            { from: creator }
+          )
         );
       });
     });
@@ -710,9 +829,20 @@ contract('Event', function(accounts) {
       function() {
         it('reverts', async function() {
           await assertRevert(
-            this.core.createEvent(startTime, endTime, 0, 100, 50, 100, 100, [accounts[0]], {
-              from: creator
-            })
+            this.core.createEvent(
+              startTime,
+              endTime,
+              0,
+              100,
+              0,
+              100,
+              100,
+              12,
+              20,
+              '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+              [accounts[0]],
+              { from: creator }
+            )
           );
         });
       }
@@ -734,6 +864,9 @@ contract('Event', function(accounts) {
         50,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -744,7 +877,7 @@ contract('Event', function(accounts) {
 
     context('when successfull', function() {
       it('sets the specified event canceled state to true', async function() {
-        assert.equal((await this.core.getEventSecond(eventId))[5], true);
+        assert.equal((await this.core.getEventState(eventId))[3], true);
       });
     });
 
@@ -777,6 +910,9 @@ contract('Event', function(accounts) {
         50,
         50,
         50,
+        12,
+        20,
+        '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
         [accounts[0]],
         { from: creator }
       );
@@ -795,8 +931,8 @@ contract('Event', function(accounts) {
         assert.equal(parseNumber(web3.eth.getBalance(this.core.address)), 0);
       });
 
-      it('burns remaining tickets', async function() {
-        assert.equal(parseNumber((await this.core.getEventFirst(eventId))[4]), 0);
+      it('burns the remaining tickets', async function() {
+        assert.equal(parseNumber((await this.core.getEventState(eventId))[0]), 0);
       });
 
       it('emits an EventClosed event', async function() {
