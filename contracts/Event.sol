@@ -21,6 +21,9 @@ contract Event is Ticket {
     uint cashbackPercent;
     uint ownerPercent;
     uint speakersPercent;
+    uint8 hashFunction;
+    uint8 size;
+    bytes32 hash;
     address[] participants;
     address[] speakers;
     bool canceled;
@@ -38,71 +41,89 @@ contract Event is Ticket {
   event Refund(address indexed participant, uint indexed eventId);
 
   /**
-   * @dev Gets the event data
-   * @dev This method is bathed up to the two parts
-   * @dev because there's too much arguments to return
-   * @dev and the Solidity compiler returns
-   * @dev `Compile Error: Stack too deep`
+   * @dev Gets the event properties
    * @param _eventId uint ID of the event
-   * @return eventId uint the event ID
    * @return startTime uint the event start time
    * @return endTime uint the event end time
-   * @return ticketPrice uint the price for those the tickets will be sold
-   * @return ticketsAmount uint participants limit
-   * @return paidAmount uint the total paid for the event tickets ETH amount
+   * @return ticketPrice uint the ticket wei price
+   * @return cashbackPercent uint the cashback percent
+   * @return ownerPercent uint the owner percent
+   * @return speakersPercent uint the speakers percent
+   * @return speakers address[] the speakers ethereum accounts list
    */
-  function getEventFirst(uint _eventId)
+  function getEventProperties(uint _eventId)
     public
     view
     returns (
-      uint eventId,
       uint startTime,
       uint endTime,
       uint ticketPrice,
-      uint ticketsAmount,
-      uint paidAmount
+      uint cashbackPercent,
+      uint ownerPercent,
+      uint speakersPercent,
+      address[] speakers
     )
   {
     require(eventExists(_eventId));
-    return (
-      events[_eventId].eventId,
+    return(
       events[_eventId].startTime,
       events[_eventId].endTime,
       events[_eventId].ticketPrice,
-      events[_eventId].ticketsAmount,
-      events[_eventId].paidAmount
+      events[_eventId].cashbackPercent,
+      events[_eventId].ownerPercent,
+      events[_eventId].speakersPercent,
+      events[_eventId].speakers
     );
   }
 
   /**
-   * @dev Gets the event data
+   * @dev Gets the event state
    * @param _eventId uint ID of the event
-   * @return ownerPercent uint percent of the paid ETH that will receive the owner
-   * @return speakersPercent uint percent of the paid ETH that will receive the speakers
-   * @return participants address[] participants list
-   * @return speakers address[] speakers list
-   * @return canceled bool state of the event (`true` if canceled)
+   * @return ticketsAmount uint the remaining tickets amount
+   * @return paidAmount uint the event paid wei amount
+   * @return participants address[] the event participants
+   * @return canceled bool the event cancel state
    */
-  function getEventSecond(uint _eventId)
+  function getEventState(uint _eventId)
     public
     view
     returns (
-      uint cashbackPercent,
-      uint ownerPercent,
-      uint speakersPercent,
+      uint ticketsAmount,
+      uint paidAmount,
       address[] participants,
-      address[] speakers,
       bool canceled
     )
   {
     require(eventExists(_eventId));
     return(
-      events[_eventId].cashbackPercent,
-      events[_eventId].ownerPercent,
-      events[_eventId].speakersPercent,
+      events[_eventId].ticketsAmount,
+      events[_eventId].paidAmount,
       events[_eventId].participants,
-      events[_eventId].speakers,
       events[_eventId].canceled
+    );
+  }
+
+  /**
+   * @dev Gets the event metadata
+   * @param _eventId uint ID of the event
+   * @return hash bytes32 the IPFS data hash
+   * @return hashFunction uint8 the hash function used to generate hash
+   * @return size uint8 the hash size
+   */
+  function getEventData(uint _eventId)
+    public
+    view
+    returns (
+      bytes32 hash,
+      uint8 hashFunction,
+      uint8 size
+    )
+  {
+    require(eventExists(_eventId));
+    return(
+      events[_eventId].hash,
+      events[_eventId].hashFunction,
+      events[_eventId].size
     );
   }
 
@@ -134,7 +155,7 @@ contract Event is Ticket {
 
   /**
    * @dev Function to sign up a new participant
-   * @dev - participant pays ETH for a ticket
+   * @dev - participant pays wei for a ticket
    * @dev - the function calls the CyberCoin `mint` function
    * @dev - partipant receives his ticket (token)
    * @notice Participant can paid amount bigger, that the ticket price but
@@ -230,7 +251,7 @@ contract Event is Ticket {
    * @dev Function to create a new event
    * @param _startTime uint the event start time
    * @param _endTime uint the event end time
-   * @param _ticketPrice uint the ticket ETH price
+   * @param _ticketPrice uint the ticket wei price
    * @param _ticketsAmount uint the tickets amount for this event
    * @param _ownerPercent uint the owner percent
    * @param _speakersPercent uint the speakers percent
@@ -244,6 +265,9 @@ contract Event is Ticket {
     uint _cashbackPercent,
     uint _ownerPercent,
     uint _speakersPercent,
+    uint8 _hashFunction,
+    uint8 _size,
+    bytes32 _hash,
     address[] _speakers
   )
     public
@@ -255,7 +279,6 @@ contract Event is Ticket {
     require(_speakers.length > 0);
     require(_ownerPercent.add(_speakersPercent) == 100);
     require(_cashbackPercent <= 100);
-    if (_ticketPrice > 0 wei) require(_ticketPrice >= 100 wei);
 
     lastEvent++;
     address[] memory participants_;
@@ -266,10 +289,13 @@ contract Event is Ticket {
       ticketPrice     : _ticketPrice,
       ticketsAmount   : _ticketsAmount,
       paidAmount      : 0 wei,
-      participants    : participants_,
       cashbackPercent : _cashbackPercent,
       ownerPercent    : _ownerPercent,
       speakersPercent : _speakersPercent,
+      hashFunction    : _hashFunction,
+      size            : _size,
+      hash            : _hash,
+      participants    : participants_,
       speakers        : _speakers,
       canceled        : false
     });
