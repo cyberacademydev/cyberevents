@@ -166,7 +166,7 @@ contract Event is Ticket {
    * @param _data bytes32 value will be used in the `checkIn` function
    */
   function signUp(uint _eventId, bytes32 _data) public payable {
-    require(now < events[_eventId].startTime);
+    require(block.timestamp < events[_eventId].startTime);
     require(events[_eventId].ticketsAmount > 0);
     require(msg.value >= events[_eventId].ticketPrice);
     require(msg.sender != owner);
@@ -195,7 +195,7 @@ contract Event is Ticket {
     onlyOwner
   {
     require(!tokenFrozen(_tokenId));
-    require(events[eventId(_tokenId)].endTime > now);
+    require(events[eventId(_tokenId)].endTime > block.timestamp);
     require(!events[eventId(_tokenId)].canceled);
     require(keccak256(abi.encodePacked(_data)) == getTokenData(_tokenId));
 
@@ -273,7 +273,7 @@ contract Event is Ticket {
     public
     onlyOwner
   {
-    require(_startTime > now);
+    require(_startTime > block.timestamp);
     require(_endTime > _startTime);
     require(_ticketsAmount > 0);
     require(_speakers.length > 0);
@@ -321,7 +321,7 @@ contract Event is Ticket {
    * @param _eventId uint ID of the event to be closed
    */
   function closeEvent(uint _eventId) public onlyOwner {
-    require(now > events[_eventId].endTime);
+    require(block.timestamp > events[_eventId].endTime);
     require(eventExists(_eventId));
 
     if (!events[_eventId].canceled && events[_eventId].paidAmount > 0 wei) {
