@@ -1,6 +1,6 @@
 # cyberCon0
 
-For the event one contract must be deployed. This contract must define all interactions between organizer, speakers and participants.
+For the event one contract must be deployed. This contract must define basic interactions between organizer, speakers and participants.
 
 ## Roles
 
@@ -8,43 +8,50 @@ For the event one contract must be deployed. This contract must define all inter
 
 Organizer functions:
 - deploy contract to mainnet
-- promote event
+- *[off-chain]* promote event
 - confirm speakers participation
 - control checkin
-- subscribe all event costs
-- benefit from auction by share of revenue that is bided during auction deployment but can be changed before profit distribution.
+- *[off-chain]* subscribe all event costs
+- benefit from auction by share of revenue that is bided during auction process, but can be changed before profit distribution (due to the re-distribution of missed speakers' deposits)
 
 Organizer deploy contract with the following parameters:
-- name of event: cybercon0
-- place of event: Korpus 8
-- minimal bid: 0.2 ETH
-- amount of tickets: 200
-- share of revenue: 50%
-- timestamp of checkin start: 09.00 14 December
-- timestamp of profit distribution: 17.00 14 December
+- name of event: *cybercon0*
+- place of event: *Korpus 8*
+- minimal ticket bid: *0.2 ETH*
+- amount of tickets: *200*
+- organizer's share of revenue: *50%*
+- number of speakers: *4*
+- minimum report duration: *15 minutes*
+- maximum report duration: *60 minutes*
+- timestamp of checkin start: *09.00 14 December*
+- timestamp of profit distribution: *17.00 14 December*
 
 ### Speakers
 
-Everybody can bid for speakership. The bid can be any amount of ETH speaker want to lose in the event she miss his speakership. Based on this amount all profit from cyberCon is distributed to speakers. In addition to ETH he must submit his name, report name and duration in minutes. Amount of the bid does not affect organizers decision to confirm participation.
+Speaker reports some topic during the event.
 
-### Participants
+Everybody can bid for the speakership. The bid can be any amount of ETH speaker ready to loose in case she miss her speakership. This lost amount is distributed to checked-in speakers along with profit share which comes from ticket auction. In addition to ETH she must submit her name, report topic and duration in minutes. Amount of the bid should not affect organizers decision to approve speaker's participation (**though I have no idea how to garantee this**).
 
-Everybody can bid for participation. Minimal bid is 0.2 ETH due to minimal expenses needed to cover the catering. At the moment of ticket distribution bids are sorted by amount. Top 200 bids get the right to issue tickets, the other get the right to return bids back.
+### Attendees
+
+Attendee comes to the event to listen for reports.
+
+Everybody can bid for attendance. Minimal bid is being set by the contract's parameter (e.g. 0.2 ETH) and comes from the minimal expenses needed to cover the event setup costs (hall rental fees, catering, transportation, etc.). At the moment of ticket distribution bids are sorted by their amounts descending. Top 200 bids get the right to issue tickets, the other get the right to return bids back.
 
 ## Processes
 
 ### Auction
 
-At this stage contract is being deployed to mainnet by organizer. From the moment of deployment participants can participate in the auction, speakers can bid their participation and organizer can confirm speakers.
+At this stage contract is being deployed to mainnet by organizer. From the moment of deployment attendees can participate in the ticket auction, speakers can bid for their speakership, and organizer can approve speakers.
 
 ### Checkin
 
-Checkin must start at 09.00 14 December
+Checkin must start at *[timestamp of checkin start]* (*09.00 14 December*).
 
-After this timestamp bids can not be accepted, participation can not be confirmed. After checkin the ticket can be issued and redeemed under control of organizer. Also losing bids can be returned back
+After this timestamp bids can not be accepted, speakership can not be approved. After checkin the ticket can be issued and redeemed under control of organizer. **we ceartainly need to specify this process in detail** Also, losing ticket bids can be returned back.
 
-### Profit
+### Profit Distribution
 
-Profit distribution must be executed at 17.00 14 December.
+Profit distribution must be executed right at the *[timestamp of profit distribution]*  (*17.00 14 December*).
 
-In order to correctly distribute speakers rewards according to speakers bids actual speakers must be submitted by organizer before calling the function.
+In order to correctly count loosing speaker's bids in rewards distribution, checked-in speakers must be submitted by organizer before calling the function.
