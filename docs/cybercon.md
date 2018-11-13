@@ -1,12 +1,12 @@
 # cyberCon0
 
-For the event one contract must be deployed. This contract must define all interactions between organiser, speakers and participants.
+For the event one contract must be deployed. This contract must define all interactions between organizer, speakers and participants.
 
 ## Roles
 
 ### Organizer
 
-Organiser functions:
+Organizer functions:
 - deploy contract to mainnet
 - promote event
 - confirm speakers participation
@@ -25,7 +25,7 @@ Organizer deploy contract with the following parameters:
 
 ## Speakers
 
-Everybody can bid for speakership. The bid can be any amount of ETH speaker want to lose in the event she miss his speakership. Based on this amount all profit from cyberCon is distributed to speakers. In addition to ETH he must submit his name, report name and duration in minutes. Amount of the bid does not affect organisers decision to confirm participation.
+Everybody can bid for speakership. The bid can be any amount of ETH speaker want to lose in the event she miss his speakership. Based on this amount all profit from cyberCon is distributed to speakers. In addition to ETH he must submit his name, report name and duration in minutes. Amount of the bid does not affect organizers decision to confirm participation.
 
 ## Participants
 
@@ -47,4 +47,4 @@ After this timestamp bids can not be accepted, participation can not be confirme
 
 Profit distribution must be executed at 17.00 14 December.
 
-In order to correctly distribute speakers rewards according to speakers bids actual speakers must be submitted by organiser before calling the function.
+In order to correctly distribute speakers rewards according to speakers bids actual speakers must be submitted by organizer before calling the function.
