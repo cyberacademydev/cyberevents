@@ -17,9 +17,9 @@ Organizer functions:
 Organizer deploy contract with the following parameters:
 - name of event: cybercon0
 - place of event: Korpus 8
-- minimal bid: 0.2 ETH
+- minimal bid: 0.3 ETH
 - amount of tickets: 200
-- share of revenue: 50%
+- share of revenue: 20%
 - timestamp of checkin start: 09.00 14 December
 - timestamp of profit distribution: 17.00 14 December
 
@@ -29,7 +29,7 @@ Everybody can bid for speakership. The bid can be any amount of ETH speaker want
 
 ### Participants
 
-Everybody can bid for participation. Minimal bid is 0.2 ETH due to minimal expenses needed to cover basic costs: catering, spase rent, speaker's logistic, merch. At the moment of ticket distribution bids are sorted by amount. Top 200 bids get the right to issue tickets, the other get the right to return bids back.
+Everybody can bid for participation. Minimal bid is 0.3 ETH due to minimal expenses needed to cover basic costs: catering, spase rent, speaker's logistic, merch. At the moment of ticket distribution bids are sorted by amount. Top 200 bids get the right to issue tickets, the other get the right to return bids back.
 
 ## Processes
 
