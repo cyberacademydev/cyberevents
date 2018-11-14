@@ -29,7 +29,7 @@ Everybody can bid for speakership. The bid can be any amount of ETH speaker want
 
 ### Participants
 
-Everybody can bid for participation. Minimal bid is 0.2 ETH due to minimal expenses needed to cover basic casts: catering, spase rent, speaker's logistic, merch. At the moment of ticket distribution bids are sorted by amount. Top 200 bids get the right to issue tickets, the other get the right to return bids back.
+Everybody can bid for participation. Minimal bid is 0.2 ETH due to minimal expenses needed to cover basic costs: catering, spase rent, speaker's logistic, merch. At the moment of ticket distribution bids are sorted by amount. Top 200 bids get the right to issue tickets, the other get the right to return bids back.
 
 ## Processes
 
