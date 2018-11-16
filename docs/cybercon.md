@@ -1,6 +1,6 @@
 # cyberCon0
 
-For the event one contract must be deployed. This contract must define basic interactions between organizer, speakers and participants.
+For [the event](https://www.eventbrite.com/e/cybercon18-tickets-52430689604) one contract must be deployed. This contract must define basic interactions between organizer, speakers and participants.
 
 ## Roles
 
@@ -30,7 +30,7 @@ Organizer deploy contract with the following parameters:
 
 Speaker reports some topic during the event.
 
-Everybody can bid for the speakership. The bid can be any amount of ETH speaker ready to loose in case she miss her speakership. This lost amount is distributed to checked-in speakers along with profit share which comes from ticket auction. In addition to ETH she must submit her name, report topic and duration in minutes. Amount of the bid should not affect organizers decision to approve speaker's participation (**though I have no idea how to garantee this**).
+Everybody can bid for the speakership. The bid can be any amount of ETH speaker ready to loose in case she miss her speakership (we call her *Missed Speaker* in that case). This lost amount is distributed to checked-in speakers along with profit share which comes from [the ticket auction](#auction). In addition to ETH she must submit her name, report topic and duration in minutes. Amount of the bid should not affect organizers decision to approve speaker's participation (**though I have no idea how to garantee this**).
 
 ### Attendees
 
@@ -44,14 +44,33 @@ Everybody can bid for attendance. Minimal bid is being set by the contract's par
 
 At this stage contract is being deployed to mainnet by organizer. From the moment of deployment attendees can participate in the ticket auction, speakers can bid for their speakership, and organizer can approve speakers.
 
+Ticket auction works as a classical [English Auction](https://en.wikipedia.org/wiki/English_auction) with following **rules**:
+
++ **Opening Bid** equals to \<*minimal ticket bid*\> specified in smart contract
++ **Minimum increment** equals to Opening Bid
++ **Auction starts** at the moment of contract deployment
++ **Auction finishes** at the \<*timestamp of checkin start*\>
+
+After action finishes, the winners should be determined by following rule:
+
++ Take top 200 (\<*amount of tickets*\>) distinct addresses from list of bids sorted by value descending.
+
 ### Checkin
 
-Checkin must start at *[timestamp of checkin start]* (*09.00 14 December*).
+Checkin must start at \<*timestamp of checkin start*\> (*09.00 14 December*).
 
-After this timestamp bids can not be accepted, speakership can not be approved. After checkin the ticket can be issued and redeemed under control of organizer. **we ceartainly need to specify this process in detail** Also, losing ticket bids can be returned back.
+After this timestamp bids can not be accepted, speakership can not be approved. After checkin the ticket can be issued and redeemed under control of organizer. **we certainly need to specify this process in detail** Also, losing ticket bids can be returned back.
 
 ### Profit Distribution
 
 Profit distribution must be executed right at the *[timestamp of profit distribution]*  (*17.00 14 December*).
 
 In order to correctly count loosing speaker's bids in rewards distribution, checked-in speakers must be submitted by organizer before calling the function.
+
+For the sake of simplicity, we do not count costs explicitly in the contract. Costs are Orginizer's risk, and are accounted in her revenue share rate.
+
+Profit Distribution rules are:
+
++ **Speaker's Profit** = **Total revenue from ticket auction** * \<*organizer's share of revenue*\> (50%) / \<*number of checked-in speakers*\> + **Total deposits of missed speakers**/<*number of checked-in speakers*\>
++ **Missed Speaker Loss** = her deposit
++ **Organizer's Profit** = **Total revenue from ticket auction** - **All Speaker's Profit** - **Event Setup Costs** (which are not counted in contract though)
