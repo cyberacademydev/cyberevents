@@ -70,12 +70,14 @@ In order to correctly count loosing speaker's bids in rewards distribution, chec
 For the sake of simplicity, we do not count costs explicitly in the contract. Costs are Orginizer's risk, and are accounted in her revenue share rate.
 
 Profit Distribution rules are:
-- <speaker's profit> =
-  (<total revenue from ticket auction> * <speakers share of revenue (20%)>) *
-  (<total deposits of checked-in speakers> / <total deposit of speakers>)
+- \<speaker's profit> =
 
-- <speaker's profit> =
-  (<total revenue from ticket auction> * <organizer share of revenue (80%)>) +
-  <total deposits of missed speakers>
+  (\<total revenue from ticket auction> * \<speakers share of revenue (20%)>) *
+  
+  (\<total deposits of checked-in speakers> / \<total deposit of speakers>)
 
-- <missed speaker loss> = her deposit
+- \<organizer's profit> =
+  (\<total revenue from ticket auction> * \<organizer share of revenue (80%)>) +
+  <\total deposits of missed speakers>
+
+- \<missed speaker loss> = her deposit
