@@ -1,6 +1,5 @@
 # cyberCon0
-
-For [the event](https://www.eventbrite.com/e/cybercon18-tickets-52430689604) one contract must be deployed. This contract must define basic interactions between organizer, speakers and participants.
+For [the event](https://www.eventbrite.com/e/cybercon18-tickets-52430689604) one contract must be deployed. This contract must define basic interactions between Organizer, Speakers and Attendees.
 
 ## Roles
 
@@ -9,18 +8,18 @@ For [the event](https://www.eventbrite.com/e/cybercon18-tickets-52430689604) one
 Organizer functions:
 - deploy contract to mainnet
 - *[off-chain]* promote event
-- confirm speakers participation
+- confirm Speaker's participation
 - control checkin
 - *[off-chain]* subscribe all event costs
-- benefit from auction by share of revenue that is bided during auction process, but can be changed before profit distribution (due to the re-distribution of missed speakers' deposits)
+- benefit from auction by share of revenue that is bided during auction process, but can be changed before profit distribution (due to the re-distribution of missed Speakers' deposits)
 
 Organizer deploy contract with the following parameters:
 - name of event: *cybercon0*
 - place of event: *Korpus 8*
 - minimal ticket bid: *0.2 ETH*
 - amount of tickets: *200*
-- organizer's share of revenue: *50%*
-- number of speakers: *4*
+- Organizer's share of revenue: *50%*
+- number of Speakers: *4*
 - minimum report duration: *15 minutes*
 - maximum report duration: *60 minutes*
 - timestamp of checkin start: *09.00 14 December*
@@ -30,7 +29,7 @@ Organizer deploy contract with the following parameters:
 
 Speaker reports some topic during the event.
 
-Everybody can bid for the speakership. The bid can be any amount of ETH speaker ready to loose in case she miss her speakership (we call her *Missed Speaker* in that case). This lost amount is distributed to checked-in speakers along with profit share which comes from [the ticket auction](#auction). In addition to ETH she must submit her name, report topic and duration in minutes. Amount of the bid should not affect organizers decision to approve speaker's participation (**though I have no idea how to garantee this**).
+Everybody can bid for the speakership. The bid can be any amount of ETH Speaker ready to loose in case she miss her speakership (we call her *Missed Speaker* in that case). This lost amount goes to the Organizer to compensate reputational loss coming from missed speaker. Checked-in speakers get profit share which comes from [the ticket auction](#auction) (see [Profit Distribution](#profit-distribution). In addition to ETH she must submit her name, report topic and duration in minutes. Amount of the bid should not affect Organizers decision to approve Speaker's participation (**though I have no idea how to garantee this**).
 
 ### Attendees
 
@@ -42,7 +41,7 @@ Everybody can bid for attendance. Minimal bid is being set by the contract's par
 
 ### Auction
 
-At this stage contract is being deployed to mainnet by organizer. From the moment of deployment attendees can participate in the ticket auction, speakers can bid for their speakership, and organizer can approve speakers.
+At this stage contract is being deployed to mainnet by Organizer. From the moment of deployment Attendees can participate in the ticket auction, Speakers can bid for their speakership, and Organizer can approve Speakers.
 
 Ticket auction works as a classical [English Auction](https://en.wikipedia.org/wiki/English_auction) with following **rules**:
 
@@ -51,33 +50,73 @@ Ticket auction works as a classical [English Auction](https://en.wikipedia.org/w
 + **Auction starts** at the moment of contract deployment
 + **Auction finishes** at the \<*timestamp of checkin start*\>
 
-After action finishes, the winners should be determined by following rule:
+After action finishes:
 
-+ Take top 200 (\<*amount of tickets*\>) distinct addresses from list of bids sorted by value descending.
++ the winners should be determined by following rule:
+
+    Take top 200 (\<*amount of tickets*\>) distinct addresses from list of bids sorted by value descending.
+
++ the loosers get their bids back by batch transaction
 
 ### Checkin
 
-Checkin must start at \<*timestamp of checkin start*\> (*09.00 14 December*).
++ **Opens** at \<*timestamp of checkin start*\> (*09.00 14 December*).
++ **Closes** at \<*timestamp of profit distribution*\> minus *1 hour* (*16.00 14 December*).
 
-After this timestamp bids can not be accepted, speakership can not be approved. After checkin the ticket can be issued and redeemed under control of organizer. **we certainly need to specify this process in detail** Also, losing ticket bids can be returned back.
+**Since checkin opened:**
+
++ no bids can be accepted, 
++ no new Speakers can be approved,
++ losing Attendees bids are returned back.
+
+**Checking mechanics are:**
+
+There is a girl at the front desk. She got her role in the App. She has the bracelets with 2 colors, say yellow for Attendee and red for Speaker. The process goes as follows:
+
++ guest signs the message with his key in the App. The message looks something like this:
+    ```
+    {"role":"attendee", "ts": "2018-11-19T11:39:03.403Z"}
+    ```
+
++ the App formes the QR code from the signed message, and the guest show the QR code to the girl at the front desk
++ the girl scans the QR code with her phone camera, using her App, and:
+
+    * guest's role and ETH account are extracted from the signed message and being compared to the registry from the contract
+    * if *match*, 
+        
+        - the App shows OK and the role (braclet color to be issued for the guest)
+        - girl give the braclet to the guest. **Voila, the guest has been registered**.
+
+    * if *failed*,
+
+        - the App shows FAIL
+        - the guest should no be registered
+        - the girl should navigate the guest to the support deck for issue proceedings
+        
++ all the process has been logged to the App server
+
+**Since checkin closed:**
+
++ no Attendees can be registered
++ no Speakers can be registered
 
 ### Profit Distribution
 
 Profit distribution must be executed right at the *[timestamp of profit distribution]*  (*17.00 14 December*).
 
-In order to correctly count loosing speaker's bids in rewards distribution, checked-in speakers must be submitted by organizer before calling the function.
+In order to correctly count loosing Speaker's bids in rewards distribution, checked-in Speakers must be submitted by Organizer before calling the function.
 
 For the sake of simplicity, we do not count costs explicitly in the contract. Costs are Orginizer's risk, and are accounted in her revenue share rate.
 
 Profit Distribution rules are:
-- \<speaker's profit> =
+- \<Speaker's profit> =
 
   (\<total revenue from ticket auction> * \<speakers share of revenue (20%)>) *
   
   (\<total deposits of checked-in speakers> / \<total deposit of speakers>)
 
-- \<organizer's profit> =
-  (\<total revenue from ticket auction> * \<organizer share of revenue (80%)>) +
-  <\total deposits of missed speakers>
+- \<Organizer's profit> =
+  (\<total revenue from ticket auction> * \<Organizer share of revenue (80%)>) +
+  \<total deposits of missed speakers>
 
-- \<missed speaker loss> = her deposit
+- \<Missed Speaker loss> = her deposit
